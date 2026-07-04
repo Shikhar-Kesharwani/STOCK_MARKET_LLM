@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Stock Market AI - Premium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <style>
+        :root {
+            --glass-bg: rgba(10, 10, 15, 0.45);
+            --glass-border: rgba(0, 240, 255, 0.15);
+            --primary: #00f0ff;
+            --secondary: #ff0055;
+            --tertiary: #7000ff;
+            --text-light: #ffffff;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #020205;
+            color: var(--text-light);
+        }
+
+        /* Cinematic Film Grain Overlay */
+        .noise-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0.04;
+            background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Scanlines */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .main-wrapper {
+            position: relative;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            perspective: 1000px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--tertiary));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 4s linear infinite;
+            text-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
+            position: relative;
+        }
+
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+
+        /* 3D Tilt Glass Panel */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 
+                0 0 40px rgba(0, 240, 255, 0.1),
+                inset 0 0 20px rgba(255, 255, 255, 0.05);
+            width: 100%;
+            max-width: 950px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0.6;
+        }
+
+        .chat-container {
+            height: 55vh;
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            scroll-behavior: smooth;
+            transform: translateZ(30px); /* Pops out slightly in 3D */
+        }
+
+        .chat-container::-webkit-scrollbar { width: 6px; }
+        .chat-container::-webkit-scrollbar-track { background: transparent; }
+        .chat-container::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 10px; }
+
+        .message {
+            padding: 18px 24px;
+            border-radius: 16px;
+            max-width: 80%;
+            line-height: 1.6;
+            font-size: 1.05rem;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes popIn {
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(0, 100, 255, 0.05));
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .bot {
+            align-self: flex-start;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* High-tech animated input area */
+        .input-area {
+            display: flex;
+            gap: 15px;
+            padding: 25px 30px;
+            background: rgba(0, 0, 0, 0.4);
+            border-top: 1px solid var(--glass-border);
+            transform: translateZ(40px);
+        }
+
+        .input-wrapper {
+            flex-grow: 1;
+            position: relative;
+            border-radius: 14px;
+        }
+
+        /* Animated glowing border effect */
+        .input-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--tertiary), var(--primary));
+            background-size: 400%;
+            z-index: -1;
+            filter: blur(8px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 16px;
+            animation: animateGlow 15s linear infinite;
+        }
+
+        .input-wrapper:focus-within::before { opacity: 0.6; }
+
+        @keyframes animateGlow {
+            0% { background-position: 0 0; }
+            50% { background-position: 400% 0; }
+            100% { background-position: 0 0; }
+        }
+
+        input[type="text"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 18px 24px;
+            background: rgba(10, 10, 15, 0.8);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 14px;
+            font-size: 1.1rem;
+            color: white;
+            font-family: 'Space Grotesk', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            padding: 0 35px;
+            background: linear-gradient(45deg, var(--tertiary), var(--primary));
+            color: white;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            font-family: 'Space Grotesk', sans-serif;
+            text-transform: uppercase;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: rgba(255,255,255,0.2);
+            transform: rotate(45deg) translate(-100%, -100%);
+            transition: transform 0.5s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 240, 255, 0.6);
+        }
+
+        button:hover::after {
+            transform: rotate(45deg) translate(100%, 100%);
+        }
+
+        .metadata {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 300;
+        }
+        
+        .metadata span {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .feedback {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .feedback-btn {
+            padding: 8px 16px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            box-shadow: none;
+        }
+
+        .feedback-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,240,255,0.2);
+        }
+
+        /* Pulse Core animation */
+        .typing-indicator {
+            display: flex;
+            gap: 8px;
+            padding: 10px 5px;
+        }
+        
+        .pulse-core {
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--primary);
+            animation: heartbeat 1.2s infinite ease-in-out alternate;
+        }
+        
+        .pulse-core:nth-child(2) { animation-delay: 0.3s; background: var(--secondary); box-shadow: 0 0 15px var(--secondary);}
+        .pulse-core:nth-child(3) { animation-delay: 0.6s; background: var(--tertiary); box-shadow: 0 0 15px var(--tertiary);}
+        
+        @keyframes heartbeat {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.3); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="noise-overlay"></div>
+    <div class="scanlines"></div>
+    <div id="canvas-container"></div>
+    
+    <div class="main-wrapper" id="scene">
+        <h1 id="glitch-title">NSE Intelligence Node</h1>
+        
+        <div class="glass-panel" id="panel">
+            <div class="chat-container" id="chat">
+                <div class="message bot">
+                    Systems online. Market data feeds active. Neural network initialized.<br><br>
+                    <strong>Awaiting your query on Indian markets...</strong>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <input type="text" id="question" placeholder="Enter market query..." autocomplete="off" onkeypress="if(event.key === 'Enter') ask()">
+                </div>
+                <button onclick="ask()">Execute</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- High-End 3D Background Setup (Three.js) ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020205, 0.0015);
+        
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const group = new THREE.Group();
+        scene.add(group);
+
+        // 1. Central Core: Abstract wireframe icosahedron
+        const coreGeometry = new THREE.IcosahedronGeometry(8, 2);
+        const coreMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00f0ff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.15,
+            blending: THREE.AdditiveBlending
+        });
+        const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
+        group.add(coreMesh);
+        
+        // 2. Outer Ring: Second larger rotating sphere
+        const ringGeometry = new THREE.IcosahedronGeometry(12, 1);
+        const ringMaterial = new THREE.MeshBasicMaterial({
+            color: 0x7000ff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.1,
+            blending: THREE.AdditiveBlending
+        });
+        const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+        group.add(ringMesh);
+
+        // 3. Floating Particles (Data Streams)
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 1500;
+        const posArray = new Float32Array(particlesCount * 3);
+        const colorArray = new Float32Array(particlesCount * 3);
+        
+        for(let i = 0; i < particlesCount * 3; i+=3) {
+            // Sphere distribution
+            const radius = 25 * Math.random();
+            const theta = Math.random() * 2 * Math.PI;
+            const phi = Math.acos((Math.random() * 2) - 1);
+            
+            posArray[i] = radius * Math.sin(phi) * Math.cos(theta);
+            posArray[i+1] = radius * Math.sin(phi) * Math.sin(theta);
+            posArray[i+2] = radius * Math.cos(phi);
+
+            // Mix cyan and purple
+            const mix = Math.random();
+            colorArray[i] = mix < 0.5 ? 0 : 0.44; // r
+            colorArray[i+1] = mix < 0.5 ? 0.94 : 0; // g
+            colorArray[i+2] = 1; // b
+        }
+        
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+        
+        // Additive blending for super bright particles
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.15,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending,
+            sizeAttenuation: true
+        });
+        
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        group.add(particlesMesh);
+        
+        camera.position.z = 20;
+
+        // Mouse Parallax Logic
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+        
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX - windowHalfX) * 0.001;
+            mouseY = (event.clientY - windowHalfY) * 0.001;
+            
+            // 3D Panel Tilt Logic
+            const panel = document.getElementById('panel');
+            const rotateY = ((event.clientX / window.innerWidth) - 0.5) * 15; // Max 15deg
+            const rotateX = ((event.clientY / window.innerHeight) - 0.5) * -15;
+            panel.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        });
+
+        document.addEventListener('mouseleave', () => {
+            document.getElementById('panel').style.transform = `rotateX(0deg) rotateY(0deg)`;
+        });
+
+        // Animation Loop
+        const clock = new THREE.Clock();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+            
+            targetX = mouseX * 0.5;
+            targetY = mouseY * 0.5;
+            
+            // Complex rotations for the 3D geometries
+            coreMesh.rotation.y = elapsedTime * 0.1;
+            coreMesh.rotation.x = elapsedTime * 0.05;
+            
+            ringMesh.rotation.y = elapsedTime * -0.05;
+            ringMesh.rotation.z = elapsedTime * 0.08;
+
+            particlesMesh.rotation.y = elapsedTime * 0.02;
+            
+            // Group follows mouse smoothly
+            group.rotation.y += 0.05 * (targetX - group.rotation.y);
+            group.rotation.x += 0.05 * (targetY - group.rotation.x);
+            
+            // Pulse the core's opacity based on sine wave
+            coreMaterial.opacity = (Math.sin(elapsedTime * 2) * 0.1) + 0.15;
+            
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- Glitch Title Effect ---
+        const title = document.getElementById('glitch-title');
+        const originalText = title.innerText;
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';
+        
+        title.addEventListener('mouseover', () => {
+            let iteration = 0;
+            const interval = setInterval(() => {
+                title.innerText = title.innerText.split('').map((letter, index) => {
+                    if(index < iteration) return originalText[index];
+                    return chars[Math.floor(Math.random() * chars.length)];
+                }).join('');
+                if(iteration >= originalText.length) clearInterval(interval);
+                iteration += 1 / 3;
+            }, 30);
+        });
+
+        // --- Chat Logic ---
+        let currentSessionId = null;
+
+        async function ask() {
+            const input = document.getElementById("question");
+            const q = input.value.trim();
+            if (!q) return;
+
+            addMessage(q, "user");
+            input.value = "";
+            
+            const typingId = addTypingIndicator();
+
+            try {
+                const res = await fetch("/ask", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        question: q,
+                        session_id: currentSessionId
+                    })
+                });
+                
+                const data = await res.json();
+                document.getElementById(typingId).remove();
+                
+                if (data.session_id) {
+                    currentSessionId = data.session_id;
+                }
+
+                const msgId = `msg_${Date.now()}`;
+                let formattedAnswer = data.answer.replace(/\n/g, "<br>");
+                
+                let html = `${formattedAnswer}`;
+                html += `
+                    <div class="metadata">
+                        <span>⚡ ${data.latency_seconds}s latency</span>
+                        <span>🎯 ${data.quality_score} quality</span>
+                        <span>💸 ${data.cost_usd ? '$'+data.cost_usd.toFixed(4) : 'N/A'}</span>
+                    </div>`;
+                html += `
+                    <div class="feedback">
+                        <button class="feedback-btn" onclick="sendFeedback('${data.trace_id}', true, this)">👍 VALID</button>
+                        <button class="feedback-btn" onclick="sendFeedback('${data.trace_id}', false, this)">👎 ANOMALY</button>
+                    </div>
+                `;
+                
+                addMessageHTML(html, "bot", msgId);
+
+            } catch (err) {
+                document.getElementById(typingId).remove();
+                addMessage("SYSTEM ERROR: Connection to Intelligence Node severed.", "bot");
+            }
+        }
+
+        async function sendFeedback(traceId, isThumbsUp, btn) {
+            try {
+                await fetch("/feedback", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        trace_id: traceId,
+                        thumbs_up: isThumbsUp,
+                        comment: ""
+                    })
+                });
+                const parent = btn.parentElement;
+                parent.innerHTML = isThumbsUp ? 
+                    "<span style='color: var(--primary); font-weight: 600;'>[✓ TELEMETRY UPDATED]</span>" : 
+                    "<span style='color: var(--secondary); font-weight: 600;'>[✓ ANOMALY LOGGED]</span>";
+            } catch (err) {
+                console.error("Feedback error", err);
+            }
+        }
+
+        function addMessage(text, type) {
+            const chat = document.getElementById("chat");
+            const div = document.createElement("div");
+            const id = `msg_${Date.now()}`;
+            div.id = id;
+            div.className = `message ${type}`;
+            div.textContent = text;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+            return id;
+        }
+        
+        function addTypingIndicator() {
+            const chat = document.getElementById("chat");
+            const div = document.createElement("div");
+            const id = `msg_${Date.now()}_typing`;
+            div.id = id;
+            div.className = `message bot`;
+            div.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="pulse-core"></div>
+                    <div class="pulse-core"></div>
+                    <div class="pulse-core"></div>
+                </div>
+            `;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+            return id;
+        }
+
+        function addMessageHTML(html, type, id) {
+            const chat = document.getElementById("chat");
+            const div = document.createElement("div");
+            div.id = id;
+            div.className = `message ${type}`;
+            div.innerHTML = html;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+    </script>
+</body>
+</html>
