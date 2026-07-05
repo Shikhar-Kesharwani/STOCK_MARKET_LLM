@@ -43,7 +43,7 @@ def build_vector_store(documents_path: str):
     print(f"Created {len(chunks)} chunks")
     
     # Embed and store
-    embedder = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004", google_api_key=os.environ.get("GEMINI_API_KEY"))
+    embedder = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=os.environ.get("GEMINI_API_KEY"))
     
     # Delete existing store if rebuilding
     import shutil
@@ -62,7 +62,7 @@ def build_vector_store(documents_path: str):
 
 def load_vector_store():
     """Load existing vector store from disk."""
-    embedder = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004", google_api_key=os.environ.get("GEMINI_API_KEY"))
+    embedder = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=os.environ.get("GEMINI_API_KEY"))
     return Chroma(
         persist_directory=CHROMA_PATH,
         embedding_function=embedder
