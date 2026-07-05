@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=venom&height=300&text=NSE%20Intelligence%20Node&fontSize=70&color=0:00f0ff,50:7000ff,100:ff0055&stroke=00f0ff&strokeWidth=2&fontColor=ffffff&animation=twinkling&desc=Production-Grade%20Indian%20Stock%20Market%20AI%20%7C%20RAG%20%2B%20LLM%20%2B%20Full%20Observability&descAlignY=62&descSize=18" width="100%"/>
 
@@ -200,8 +200,8 @@ graph LR
 
 | Component | Technology | Purpose |
 |---|---|---|
-| **LLM** | `gpt-4o-mini` | Answer generation |
-| **Embeddings** | `text-embedding-ada-002` | Semantic vectorization |
+| **LLM** | Google Gemini (1.5 Flash) | Answer generation |
+| **Embeddings** | Gemini `text-embedding-004` | Semantic vectorization |
 | **Vector Store** | ChromaDB | Similarity search |
 | **Orchestration** | LangChain | RAG chain management |
 | **Observability** | Langfuse v3 | LLM tracing and evals |

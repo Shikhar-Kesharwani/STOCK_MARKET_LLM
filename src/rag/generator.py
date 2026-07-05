@@ -1,4 +1,5 @@
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+import os
 from langchain_core.documents import Document
 from dotenv import load_dotenv
 
@@ -16,8 +17,9 @@ Rules you must follow:
 5. Never speculate or make predictions — only report what the data shows
 6. Keep answers concise and factual — 3-5 sentences maximum"""
 
-GPT4O_MINI_INPUT_COST  = 0.150 / 1_000_000
-GPT4O_MINI_OUTPUT_COST = 0.600 / 1_000_000
+# Using free tier Gemini API
+GEMINI_INPUT_COST  = 0.0
+GEMINI_OUTPUT_COST = 0.0
 
 def format_context(docs: list[Document]) -> str:
     """Format retrieved documents into context string."""
@@ -37,10 +39,11 @@ def generate_answer(question: str,
     Generate a grounded answer from retrieved documents.
     Returns answer + metadata for tracing.
     """
-    llm = ChatOpenAI(
-        model="gpt-4o-mini",
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-1.5-flash",
         temperature=0,
-        max_tokens=400
+        max_tokens=400,
+        google_api_key=os.environ.get("GEMINI_API_KEY")
     )
     
     context = format_context(docs)
@@ -57,7 +60,7 @@ ANSWER:"""
     with langfuse.start_as_current_observation(
         as_type="generation",
         name="llm-call",
-        model="gpt-4o-mini",
+        model="gemini-1.5-flash",
         input=prompt
     ) as generation:
         
@@ -68,8 +71,8 @@ ANSWER:"""
         output_tokens = usage.get("output_tokens", 0) if usage else 0
         
         cost_usd = (
-            input_tokens  * GPT4O_MINI_INPUT_COST +
-            output_tokens * GPT4O_MINI_OUTPUT_COST
+            input_tokens  * GEMINI_INPUT_COST +
+            output_tokens * GEMINI_OUTPUT_COST
         )
         
         generation.update(
@@ -79,8 +82,8 @@ ANSWER:"""
                 "output":      output_tokens,
                 "total":       input_tokens + output_tokens,
                 "unit":        "TOKENS",
-                "input_cost":  input_tokens * GPT4O_MINI_INPUT_COST,
-                "output_cost": output_tokens * GPT4O_MINI_OUTPUT_COST,
+                "input_cost":  input_tokens * GEMINI_INPUT_COST,
+                "output_cost": output_tokens * GEMINI_OUTPUT_COST,
                 "total_cost":  cost_usd
             }
         )

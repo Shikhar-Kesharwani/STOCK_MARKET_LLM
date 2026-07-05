@@ -1,6 +1,6 @@
 import json
 import os
-from langchain_openai import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -43,7 +43,7 @@ def build_vector_store(documents_path: str):
     print(f"Created {len(chunks)} chunks")
     
     # Embed and store
-    embedder = OpenAIEmbeddings(model="text-embedding-3-small")
+    embedder = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004", google_api_key=os.environ.get("GEMINI_API_KEY"))
     
     # Delete existing store if rebuilding
     import shutil
@@ -62,7 +62,7 @@ def build_vector_store(documents_path: str):
 
 def load_vector_store():
     """Load existing vector store from disk."""
-    embedder = OpenAIEmbeddings(model="text-embedding-3-small")
+    embedder = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004", google_api_key=os.environ.get("GEMINI_API_KEY"))
     return Chroma(
         persist_directory=CHROMA_PATH,
         embedding_function=embedder

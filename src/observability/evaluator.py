@@ -1,11 +1,12 @@
 import json
 from langfuse import get_client
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
 langfuse = get_client()
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0, google_api_key=os.environ.get("GEMINI_API_KEY"))
 
 INDIAN_COMPANIES = [
     "reliance", "tcs", "hdfc", "infosys", "icici",
@@ -36,12 +37,20 @@ Respond ONLY with JSON:
 
     try:
         response = llm.invoke(prompt)
-        result = json.loads(response.content)
+        # Handle markdown json wrapping sometimes added by Gemini
+        content = response.content.strip()
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.endswith("```"):
+            content = content[:-3]
+        content = content.strip()
+        
+        result = json.loads(content)
         score = float(result["score"])
         reason = result.get("reason", "")
-    except:
+    except Exception as e:
         score = 0.5
-        reason = "Parse error"
+        reason = f"Parse error: {e}"
 
     langfuse.score(
         trace_id=trace_id,
