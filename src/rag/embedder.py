@@ -1,6 +1,6 @@
 import json
 import os
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -21,15 +21,13 @@ def build_vector_store(documents_path: str):
     with open(documents_path) as f:
         raw_docs = json.load(f)
     
-    # Convert to LangChain documents
-    lc_docs = [
-        Document(
-            page_content=doc["text"],
-            metadata=doc["metadata"]
-        )
-        for doc in raw_docs
-        if doc["text"].strip()  # skip empty documents
-    ]
+    # Convert to LangChain documents (clean metadata for ChromaDB)
+    lc_docs = []
+    for doc in raw_docs:
+        if not doc["text"].strip():
+            continue
+        cleaned_meta = {k: v for k, v in doc["metadata"].items() if v is not None and (not isinstance(v, list) or len(v) > 0)}
+        lc_docs.append(Document(page_content=doc["text"], metadata=cleaned_meta))
     
     print(f"Loaded {len(lc_docs)} documents")
     
@@ -42,8 +40,8 @@ def build_vector_store(documents_path: str):
     chunks = splitter.split_documents(lc_docs)
     print(f"Created {len(chunks)} chunks")
     
-    # Embed and store
-    embedder = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=os.environ.get("GEMINI_API_KEY"))
+    # Embed and store locally with HuggingFace (100% free, no API keys)
+    embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     
     # Delete existing store if rebuilding
     import shutil
@@ -62,7 +60,7 @@ def build_vector_store(documents_path: str):
 
 def load_vector_store():
     """Load existing vector store from disk."""
-    embedder = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=os.environ.get("GEMINI_API_KEY"))
+    embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     return Chroma(
         persist_directory=CHROMA_PATH,
         embedding_function=embedder
