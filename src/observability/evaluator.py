@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 langfuse = get_client()
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0, google_api_key=os.environ.get("GEMINI_API_KEY"))
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, google_api_key=os.environ.get("GEMINI_API_KEY"))
 
 INDIAN_COMPANIES = [
     "reliance", "tcs", "hdfc", "infosys", "icici",
@@ -52,7 +52,7 @@ Respond ONLY with JSON:
         score = 0.5
         reason = f"Parse error: {e}"
 
-    langfuse.score(
+    langfuse.create_score(
         trace_id=trace_id,
         name="llm-judge-quality",
         value=score,
@@ -69,7 +69,7 @@ def eval_has_numbers(answer: str, trace_id: str) -> float:
     
     score = (has_rupee + has_percent + has_number) / 3
     
-    langfuse.score(
+    langfuse.create_score(
         trace_id=trace_id,
         name="has-specific-numbers",
         value=score
@@ -83,7 +83,7 @@ def eval_mentions_company(answer: str, trace_id: str) -> float:
     found = any(c in answer_lower for c in INDIAN_COMPANIES)
     score = 1.0 if found else 0.0
     
-    langfuse.score(
+    langfuse.create_score(
         trace_id=trace_id,
         name="mentions-company",
         value=score
@@ -100,7 +100,7 @@ def eval_not_vague(answer: str, trace_id: str) -> float:
     is_vague = any(p in answer.lower() for p in vague_phrases)
     score = 0.0 if is_vague else 1.0
     
-    langfuse.score(
+    langfuse.create_score(
         trace_id=trace_id,
         name="not-vague",
         value=score
@@ -125,7 +125,7 @@ def run_all_evals(question: str,
 def log_user_feedback(trace_id: str,
                       thumbs_up: bool,
                       comment: str = ""):
-    langfuse.score(
+    langfuse.create_score(
         trace_id=trace_id,
         name="user-feedback",
         value=1.0 if thumbs_up else 0.0,

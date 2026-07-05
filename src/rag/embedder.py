@@ -1,6 +1,6 @@
 import json
 import os
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -40,11 +40,12 @@ def build_vector_store(documents_path: str):
     chunks = splitter.split_documents(lc_docs)
     print(f"Created {len(chunks)} chunks")
     
-    # Embed and store locally with HuggingFace (100% free, no API keys)
-    embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    # Embed and store with FastEmbed
+    embedder = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
     
     # Delete existing store if rebuilding
     import shutil
+    import pickle
     if os.path.exists(CHROMA_PATH):
         shutil.rmtree(CHROMA_PATH)
     
@@ -54,13 +55,16 @@ def build_vector_store(documents_path: str):
         persist_directory=CHROMA_PATH
     )
     
+    with open("data/chunks.pkl", "wb") as f:
+        pickle.dump(chunks, f)
+    
     print(f"✓ Vector store built: {len(chunks)} chunks stored")
     return vectorstore
 
 
 def load_vector_store():
     """Load existing vector store from disk."""
-    embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    embedder = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
     return Chroma(
         persist_directory=CHROMA_PATH,
         embedding_function=embedder

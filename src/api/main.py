@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 from langfuse import get_client
-from src.observability.tracer import ask_stock_rag_with_session
+from src.observability.tracer import ask_stock_rag_with_session, run_debate_with_session
 from src.observability.evaluator import run_all_evals, log_user_feedback
 from dotenv import load_dotenv
 
@@ -99,6 +99,43 @@ async def ask(req: QueryRequest):
     
     except Exception as e:
         raise HTTPException(500, f"RAG pipeline error: {str(e)}")
+    finally:
+        langfuse.flush()
+
+@app.post("/debate")
+async def debate(req: QueryRequest):
+    """Multi-Agent debate endpoint."""
+    if not req.question.strip():
+        raise HTTPException(400, "Question cannot be empty")
+    
+    if len(req.question) > 500:
+        raise HTTPException(400, "Question too long (max 500 chars)")
+    
+    try:
+        # Get dual answers
+        result = run_debate_with_session(
+            question=req.question,
+            user_id=req.user_id,
+            session_id=req.session_id,
+            company_filter=req.company_filter
+        )
+        
+        # Auto-evaluate just the bull answer to have some basic eval metric, or skip.
+        # For simplicity, we just return the debate.
+        
+        return {
+            "bull_answer":      result["bull_answer"],
+            "bear_answer":      result["bear_answer"],
+            "sources":          result["sources"],
+            "companies":        result["companies"],
+            "latency_seconds":  round(result["latency"], 3),
+            "trace_id":         result["trace_id"],
+            "session_id":       result["session_id"],
+            "cost_usd":         result["cost_usd"]
+        }
+    
+    except Exception as e:
+        raise HTTPException(500, f"Debate pipeline error: {str(e)}")
     finally:
         langfuse.flush()
 

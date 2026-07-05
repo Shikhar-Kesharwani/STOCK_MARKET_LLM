@@ -3,6 +3,7 @@ import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
 import time
+from textblob import TextBlob
 
 # Free RSS feeds for Indian financial news
 NEWS_FEEDS = {
@@ -71,6 +72,16 @@ Published: {published}
 {summary[:800]}
                 """.strip()
                 
+                # Sentiment Analysis
+                blob = TextBlob(full_text)
+                polarity = blob.sentiment.polarity
+                if polarity > 0.1:
+                    sentiment = "Bullish"
+                elif polarity < -0.1:
+                    sentiment = "Bearish"
+                else:
+                    sentiment = "Neutral"
+
                 all_docs.append({
                     "text": doc_text,
                     "metadata": {
@@ -79,7 +90,8 @@ Published: {published}
                         "title": title,
                         "published": published,
                         "companies": relevant_companies,
-                        "url": link
+                        "url": link,
+                        "sentiment": sentiment
                     }
                 })
             

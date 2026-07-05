@@ -3,627 +3,1196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Indian Stock Market AI - Premium</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>NSE Intelligence | AI-Powered Indian Market Analysis</title>
+    <meta name="description" content="Real-time AI-powered Indian stock market intelligence. Ask any question about NSE-listed companies, get instant RAG-powered answers.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
     <style>
         :root {
-            --glass-bg: rgba(10, 10, 15, 0.45);
-            --glass-border: rgba(0, 240, 255, 0.15);
-            --primary: #00f0ff;
-            --secondary: #ff0055;
-            --tertiary: #7000ff;
-            --text-light: #ffffff;
+            --bg-deep: #060910;
+            --bg-card: rgba(12, 16, 26, 0.85);
+            --bg-card-hover: rgba(16, 22, 36, 0.9);
+            --border: rgba(99, 179, 237, 0.12);
+            --border-bright: rgba(99, 179, 237, 0.35);
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-gold: #f59e0b;
+            --text-primary: #f0f6ff;
+            --text-secondary: rgba(160, 185, 220, 0.85);
+            --text-muted: rgba(100, 130, 165, 0.7);
+            --glow-blue: rgba(59, 130, 246, 0.25);
+            --glow-cyan: rgba(6, 182, 212, 0.2);
         }
 
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
             height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
             overflow: hidden;
-            font-family: 'Space Grotesk', sans-serif;
-            background-color: #020205;
-            color: var(--text-light);
         }
 
-        /* Cinematic Film Grain Overlay */
-        .noise-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 10;
-            opacity: 0.04;
-            background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
-        }
-
-        #canvas-container {
-            position: absolute;
+        /* ── 3D AI Network Background ── */
+        #three-canvas {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: 0;
-        }
-
-        /* Scanlines */
-        .scanlines {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
-            background-size: 100% 4px;
             pointer-events: none;
-            z-index: 5;
+            opacity: 0.85;
+            background-color: #020306;
         }
 
-        .main-wrapper {
-            position: relative;
-            z-index: 20;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            padding: 20px;
-            box-sizing: border-box;
-            perspective: 1000px;
+        /* ── Top Navigation Bar ── */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            height: 58px;
+            background: rgba(6, 9, 16, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px;
         }
 
-        h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 30px;
-            text-align: center;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--tertiary));
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: shine 4s linear infinite;
-            text-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
-            position: relative;
+        .navbar-brand {
+            display: flex; align-items: center; gap: 10px;
         }
 
-        @keyframes shine {
-            to { background-position: 200% center; }
-        }
-
-        /* 3D Tilt Glass Panel */
-        .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(25px) saturate(180%);
-            -webkit-backdrop-filter: blur(25px) saturate(180%);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            box-shadow: 
-                0 0 40px rgba(0, 240, 255, 0.1),
-                inset 0 0 20px rgba(255, 255, 255, 0.05);
-            width: 100%;
-            max-width: 950px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transform-style: preserve-3d;
-            transition: transform 0.1s ease, box-shadow 0.3s ease;
-            position: relative;
-        }
-
-        .glass-panel::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--primary), transparent);
-            opacity: 0.6;
-        }
-
-        .chat-container {
-            height: 55vh;
-            padding: 30px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-            scroll-behavior: smooth;
-            transform: translateZ(30px); /* Pops out slightly in 3D */
-        }
-
-        .chat-container::-webkit-scrollbar { width: 6px; }
-        .chat-container::-webkit-scrollbar-track { background: transparent; }
-        .chat-container::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 10px; }
-
-        .message {
-            padding: 18px 24px;
-            border-radius: 16px;
-            max-width: 80%;
-            line-height: 1.6;
-            font-size: 1.05rem;
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            opacity: 0;
-            transform: translateY(30px) scale(0.95);
-            position: relative;
-            z-index: 1;
-        }
-
-        @keyframes popIn {
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .user {
-            align-self: flex-end;
-            background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(0, 100, 255, 0.05));
-            border: 1px solid rgba(0, 240, 255, 0.4);
-            border-bottom-right-radius: 4px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .bot {
-            align-self: flex-start;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-bottom-left-radius: 4px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        /* High-tech animated input area */
-        .input-area {
-            display: flex;
-            gap: 15px;
-            padding: 25px 30px;
-            background: rgba(0, 0, 0, 0.4);
-            border-top: 1px solid var(--glass-border);
-            transform: translateZ(40px);
-        }
-
-        .input-wrapper {
-            flex-grow: 1;
-            position: relative;
-            border-radius: 14px;
-        }
-
-        /* Animated glowing border effect */
-        .input-wrapper::before {
-            content: '';
-            position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--tertiary), var(--primary));
-            background-size: 400%;
-            z-index: -1;
-            filter: blur(8px);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            border-radius: 16px;
-            animation: animateGlow 15s linear infinite;
-        }
-
-        .input-wrapper:focus-within::before { opacity: 0.6; }
-
-        @keyframes animateGlow {
-            0% { background-position: 0 0; }
-            50% { background-position: 400% 0; }
-            100% { background-position: 0 0; }
-        }
-
-        input[type="text"] {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 18px 24px;
-            background: rgba(10, 10, 15, 0.8);
-            border: 1px solid rgba(0, 240, 255, 0.3);
-            border-radius: 14px;
-            font-size: 1.1rem;
-            color: white;
-            font-family: 'Space Grotesk', sans-serif;
-            transition: all 0.3s ease;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        button {
-            padding: 0 35px;
-            background: linear-gradient(45deg, var(--tertiary), var(--primary));
-            color: white;
-            border: none;
-            border-radius: 14px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            font-family: 'Space Grotesk', sans-serif;
-            text-transform: uppercase;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
-            position: relative;
-            overflow: hidden;
-        }
-
-        button::after {
-            content: '';
-            position: absolute;
-            top: -50%; left: -50%; width: 200%; height: 200%;
-            background: rgba(255,255,255,0.2);
-            transform: rotate(45deg) translate(-100%, -100%);
-            transition: transform 0.5s ease;
-        }
-
-        button:hover {
-            transform: scale(1.05) translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 240, 255, 0.6);
-        }
-
-        button:hover::after {
-            transform: rotate(45deg) translate(100%, 100%);
-        }
-
-        .metadata {
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 12px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-weight: 300;
-        }
-        
-        .metadata span {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 4px 10px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .feedback {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .feedback-btn {
-            padding: 8px 16px;
-            font-size: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        .brand-icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             border-radius: 8px;
-            box-shadow: none;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 800;
+            box-shadow: 0 0 16px var(--glow-blue);
         }
 
+        .brand-name {
+            font-size: 1.05rem; font-weight: 700; letter-spacing: 0.5px;
+            background: linear-gradient(90deg, var(--text-primary), var(--accent-cyan));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .brand-tag {
+            font-size: 0.65rem; font-weight: 600; letter-spacing: 2px;
+            color: var(--text-muted); text-transform: uppercase;
+        }
+
+        .navbar-ticker {
+            flex: 1; overflow: hidden; margin: 0 32px;
+            mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+        }
+
+        .ticker-track {
+            display: flex; gap: 40px; align-items: center;
+            animation: tickerScroll 30s linear infinite;
+            white-space: nowrap;
+        }
+        @keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+        .ticker-item {
+            display: flex; align-items: center; gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem; font-weight: 600;
+        }
+        .ticker-symbol { color: var(--text-secondary); }
+        .ticker-price { color: var(--text-primary); }
+        .ticker-change.up { color: var(--accent-green); }
+        .ticker-change.down { color: var(--accent-red); }
+
+        .navbar-status {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.72rem; font-weight: 600; color: var(--accent-green);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .status-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.6; }
+        }
+
+        /* ── Main Layout ── */
+        .app-layout {
+            position: fixed; inset: 0; top: 58px;
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            grid-template-rows: 1fr;
+            z-index: 10;
+        }
+
+        /* ── Left Sidebar ── */
+        .sidebar {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .sidebar-title {
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--text-muted);
+        }
+
+        .market-badge {
+            padding: 3px 9px; border-radius: 20px; font-size: 0.65rem;
+            font-weight: 700; letter-spacing: 1px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--accent-green);
+        }
+
+        /* Stock Cards */
+        .stocks-list {
+            flex: 1; overflow-y: auto; padding: 10px;
+        }
+        .stocks-list::-webkit-scrollbar { width: 4px; }
+        .stocks-list::-webkit-scrollbar-track { background: transparent; }
+        .stocks-list::-webkit-scrollbar-thumb { background: rgba(99, 179, 237, 0.2); border-radius: 4px; }
+
+        .stock-card {
+            padding: 12px 14px; border-radius: 10px; margin-bottom: 6px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid transparent;
+            cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .stock-card:hover {
+            background: rgba(59, 130, 246, 0.06);
+            border-color: var(--border-bright);
+            transform: translateX(2px);
+        }
+        .stock-card.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .stock-card-left { display: flex; align-items: center; gap: 10px; }
+        .stock-avatar {
+            width: 34px; height: 34px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 800; letter-spacing: -0.5px;
+            flex-shrink: 0;
+        }
+
+        .stock-info { display: flex; flex-direction: column; gap: 2px; }
+        .stock-symbol { font-size: 0.8rem; font-weight: 700; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; }
+        .stock-name { font-size: 0.67rem; color: var(--text-muted); font-weight: 400; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .stock-card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+        .stock-price { font-size: 0.82rem; font-weight: 700; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; }
+        .stock-pct { font-size: 0.68rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
+        .stock-pct.up { color: var(--accent-green); background: rgba(16,185,129,0.1); }
+        .stock-pct.down { color: var(--accent-red); background: rgba(239,68,68,0.1); }
+
+        /* Chart Panel (bottom of sidebar) */
+        .sidebar-chart {
+            border-top: 1px solid var(--border);
+            padding: 14px 16px;
+            background: rgba(0,0,0,0.2);
+        }
+        .chart-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
+        }
+        .chart-company-name { font-size: 0.75rem; font-weight: 700; color: var(--text-primary); }
+        .chart-period-btns { display: flex; gap: 4px; }
+        .chart-period-btn {
+            padding: 3px 8px; font-size: 0.62rem; font-weight: 600;
+            border-radius: 4px; border: 1px solid var(--border);
+            background: transparent; color: var(--text-muted); cursor: pointer;
+            transition: all 0.15s; font-family: 'JetBrains Mono', monospace;
+        }
+        .chart-period-btn.active, .chart-period-btn:hover {
+            background: rgba(59, 130, 246, 0.15); border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .chart-canvas-wrap { height: 120px; position: relative; }
+
+        /* ── Right Panel: Chat ── */
+        .chat-panel {
+            display: flex; flex-direction: column;
+            overflow: hidden; position: relative;
+        }
+
+        /* Chat Header */
+        .chat-header {
+            padding: 14px 24px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .chat-header-left { display: flex; align-items: center; gap: 12px; }
+        .ai-avatar {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; box-shadow: 0 0 16px rgba(139, 92, 246, 0.3);
+            animation: avatarGlow 3s ease-in-out infinite;
+        }
+        @keyframes avatarGlow {
+            0%, 100% { box-shadow: 0 0 16px rgba(139, 92, 246, 0.3); }
+            50% { box-shadow: 0 0 28px rgba(59, 130, 246, 0.5); }
+        }
+        .chat-header-info { display: flex; flex-direction: column; gap: 2px; }
+        .chat-header-name { font-size: 0.9rem; font-weight: 700; }
+        .chat-header-sub { font-size: 0.68rem; color: var(--text-muted); }
+        .chat-header-right { display: flex; gap: 8px; }
+        .header-chip {
+            padding: 4px 10px; border-radius: 20px; font-size: 0.65rem;
+            font-weight: 600; font-family: 'JetBrains Mono', monospace;
+            border: 1px solid var(--border); color: var(--text-muted);
+        }
+
+        /* Chat Messages */
+        .chat-messages {
+            flex: 1; overflow-y: auto; padding: 24px;
+            display: flex; flex-direction: column; gap: 20px;
+            scroll-behavior: smooth;
+        }
+        .chat-messages::-webkit-scrollbar { width: 5px; }
+        .chat-messages::-webkit-scrollbar-track { background: transparent; }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(99, 179, 237, 0.2); border-radius: 4px; }
+
+        /* Welcome Card */
+        .welcome-card {
+            background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.06));
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 16px; padding: 24px;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+        .welcome-card h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+        .welcome-card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; }
+        .suggestion-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip {
+            padding: 7px 13px; border-radius: 20px; font-size: 0.73rem; font-weight: 500;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border-bright);
+            color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
+        }
+        .chip:hover {
+            background: rgba(59, 130, 246, 0.12); border-color: var(--accent-blue);
+            color: var(--text-primary); transform: translateY(-1px);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Message Bubbles */
+        .msg-row {
+            display: flex; gap: 12px; align-items: flex-start;
+            animation: fadeInUp 0.4s ease forwards;
+        }
+        .msg-row.user { flex-direction: row-reverse; }
+
+        .msg-avatar {
+            width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700;
+        }
+        .msg-avatar.user-av { background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)); }
+        .msg-avatar.bot-av { background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); }
+
+        .msg-content { max-width: 75%; display: flex; flex-direction: column; gap: 6px; }
+        .msg-row.user .msg-content { align-items: flex-end; }
+
+        .msg-bubble {
+            padding: 14px 18px; border-radius: 14px; line-height: 1.65;
+            font-size: 0.87rem; position: relative;
+        }
+        .msg-bubble.user {
+            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(6,182,212,0.1));
+            border: 1px solid rgba(59,130,246,0.35);
+            border-bottom-right-radius: 4px;
+        }
+        .msg-bubble.bot {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        /* Metadata row under bot messages */
+        .msg-meta {
+            display: flex; flex-wrap: wrap; gap: 6px; padding: 0 2px;
+        }
+        .meta-tag {
+            padding: 3px 9px; border-radius: 20px; font-size: 0.67rem;
+            font-weight: 600; border: 1px solid var(--border);
+            color: var(--text-muted); font-family: 'JetBrains Mono', monospace;
+            background: rgba(0,0,0,0.3);
+        }
+        .meta-tag.green { color: var(--accent-green); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
+        .meta-tag.blue { color: var(--accent-cyan); border-color: rgba(6,182,212,0.3); background: rgba(6,182,212,0.08); }
+        .meta-tag.gold { color: var(--accent-gold); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.08); }
+
+        .msg-feedback { display: flex; gap: 6px; }
+        .feedback-btn {
+            padding: 5px 12px; font-size: 0.72rem; font-weight: 600;
+            border-radius: 8px; border: 1px solid var(--border);
+            background: transparent; color: var(--text-muted);
+            cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
+        }
         .feedback-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,240,255,0.2);
+            background: rgba(255,255,255,0.06); border-color: var(--border-bright);
+            color: var(--text-primary); transform: translateY(-1px);
         }
 
-        /* Pulse Core animation */
-        .typing-indicator {
-            display: flex;
-            gap: 8px;
-            padding: 10px 5px;
+        /* Typing Indicator */
+        .typing-bubble { display: flex; gap: 6px; align-items: center; padding: 14px 18px; }
+        .typing-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--accent-blue); opacity: 0.5;
+            animation: typingBounce 1.2s ease-in-out infinite;
         }
-        
-        .pulse-core {
-            width: 12px;
-            height: 12px;
-            background: var(--primary);
-            border-radius: 50%;
-            box-shadow: 0 0 15px var(--primary);
-            animation: heartbeat 1.2s infinite ease-in-out alternate;
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; background: var(--accent-cyan); }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; background: var(--accent-purple); }
+        @keyframes typingBounce {
+            0%, 100% { transform: translateY(0); opacity: 0.4; }
+            50% { transform: translateY(-6px); opacity: 1; }
         }
-        
-        .pulse-core:nth-child(2) { animation-delay: 0.3s; background: var(--secondary); box-shadow: 0 0 15px var(--secondary);}
-        .pulse-core:nth-child(3) { animation-delay: 0.6s; background: var(--tertiary); box-shadow: 0 0 15px var(--tertiary);}
-        
-        @keyframes heartbeat {
-            0% { transform: scale(0.8); opacity: 0.5; }
-            100% { transform: scale(1.3); opacity: 1; }
+
+        /* ── Chat Input Area ── */
+        .input-area {
+            padding: 16px 24px 20px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
         }
+
+        .input-row {
+            display: flex; gap: 10px; align-items: flex-end;
+        }
+
+        .input-box {
+            flex: 1; position: relative;
+        }
+
+        .input-box::before {
+            content: '';
+            position: absolute; inset: -1px;
+            border-radius: 13px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+            opacity: 0; z-index: -1;
+            transition: opacity 0.3s;
+            filter: blur(2px);
+        }
+        .input-box:focus-within::before { opacity: 0.5; }
+
+        textarea#question {
+            width: 100%; min-height: 52px; max-height: 120px;
+            resize: none; overflow-y: auto;
+            padding: 14px 16px;
+            background: rgba(10, 14, 24, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.88rem; font-family: 'Inter', sans-serif;
+            color: var(--text-primary); line-height: 1.5;
+            transition: border-color 0.25s;
+            display: block;
+        }
+        textarea#question:focus { outline: none; border-color: rgba(59,130,246,0.5); }
+        textarea#question::placeholder { color: var(--text-muted); }
+
+        .send-btn {
+            width: 52px; height: 52px; border-radius: 12px; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            border: none; color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; transition: all 0.25s;
+            box-shadow: 0 0 20px rgba(59,130,246,0.3);
+        }
+        .send-btn:hover { transform: scale(1.06) translateY(-1px); box-shadow: 0 0 30px rgba(59,130,246,0.5); }
+        .send-btn:active { transform: scale(0.97); }
+        .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .debate-btn {
+            height: 52px; padding: 0 16px; border-radius: 12px; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-gold));
+            border: none; color: white; cursor: pointer; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            font-size: 14px; transition: all 0.25s;
+            box-shadow: 0 0 20px rgba(239,68,68,0.3);
+        }
+        .debate-btn:hover { transform: scale(1.06) translateY(-1px); box-shadow: 0 0 30px rgba(239,68,68,0.5); }
+        .debate-btn:active { transform: scale(0.97); }
+        .debate-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .msg-bubble.bull {
+            background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.02));
+            border: 1px solid rgba(16,185,129,0.4);
+            border-bottom-left-radius: 4px;
+        }
+        .msg-bubble.bear {
+            background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.02));
+            border: 1px solid rgba(239,68,68,0.4);
+            border-bottom-left-radius: 4px;
+        }
+
+        .input-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 8px; padding: 0 2px;
+        }
+        .input-hint { font-size: 0.67rem; color: var(--text-muted); }
+        .input-hint kbd {
+            padding: 1px 5px; background: rgba(255,255,255,0.07);
+            border-radius: 3px; border: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+        }
+        .char-count { font-size: 0.67rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+        /* Company filter pill */
+        .filter-row {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 10px; flex-wrap: wrap;
+        }
+        .filter-label { font-size: 0.67rem; color: var(--text-muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+        .filter-chip {
+            padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 600;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+        }
+        .filter-chip:hover { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(59,130,246,0.08); }
+        .filter-chip.active { background: rgba(59,130,246,0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
+        .filter-chip.clear { border-color: rgba(239,68,68,0.3); color: var(--accent-red); }
+        .filter-chip.clear:hover { background: rgba(239,68,68,0.1); }
     </style>
 </head>
 <body>
-    <div class="noise-overlay"></div>
-    <div class="scanlines"></div>
-    <div id="canvas-container"></div>
-    
-    <div class="main-wrapper" id="scene">
-        <h1 id="glitch-title">NSE Intelligence Node</h1>
-        
-        <div class="glass-panel" id="panel">
-            <div class="chat-container" id="chat">
-                <div class="message bot">
-                    Systems online. Market data feeds active. Neural network initialized.<br><br>
-                    <strong>Awaiting your query on Indian markets...</strong>
-                </div>
-            </div>
-            
-            <div class="input-area">
-                <div class="input-wrapper">
-                    <input type="text" id="question" placeholder="Enter market query..." autocomplete="off" onkeypress="if(event.key === 'Enter') ask()">
-                </div>
-                <button onclick="ask()">Execute</button>
+    <!-- 3D AI Network Background -->
+    <canvas id="three-canvas"></canvas>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <div class="brand-icon">N</div>
+            <div>
+                <div class="brand-name">NSE Intelligence</div>
+                <div class="brand-tag">AI Research Terminal</div>
             </div>
         </div>
+
+        <div class="navbar-ticker">
+            <div class="ticker-track" id="tickerTrack">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <div class="navbar-status">
+            <div class="status-dot"></div>
+            MARKET LIVE
+        </div>
+    </nav>
+
+    <!-- Main Layout -->
+    <div class="app-layout">
+
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-title">Watchlist</span>
+                <span class="market-badge">NSE · BSE</span>
+            </div>
+
+            <div class="stocks-list" id="stocksList">
+                <!-- Populated by JS -->
+            </div>
+
+            <div class="sidebar-chart">
+                <div class="chart-header">
+                    <span class="chart-company-name" id="chartCompanyName">TCS</span>
+                    <div class="chart-period-btns">
+                        <button class="chart-period-btn active" onclick="setChartPeriod('1W', this)">1W</button>
+                        <button class="chart-period-btn" onclick="setChartPeriod('1M', this)">1M</button>
+                        <button class="chart-period-btn" onclick="setChartPeriod('3M', this)">3M</button>
+                    </div>
+                </div>
+                <div class="chart-canvas-wrap">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Chat Panel -->
+        <section class="chat-panel">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="chat-header-left">
+                    <div class="ai-avatar">🧠</div>
+                    <div class="chat-header-info">
+                        <span class="chat-header-name">Market Intelligence AI</span>
+                        <span class="chat-header-sub">Powered by Gemini 1.5 Flash · RAG Pipeline</span>
+                    </div>
+                </div>
+                <div class="chat-header-right">
+                    <span class="header-chip">⚡ RAG</span>
+                    <span class="header-chip">🇮🇳 NSE/BSE</span>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-card">
+                    <h2>Welcome to NSE Intelligence 📈</h2>
+                    <p>Ask anything about the top 10 Indian stocks. I have access to live market data, financial news from Economic Times, Moneycontrol, Business Standard & LiveMint — all powered by real-time RAG retrieval.</p>
+                    <div class="suggestion-chips">
+                        <span class="chip" onclick="askSuggestion(this)">What's the latest news on TCS?</span>
+                        <span class="chip" onclick="askSuggestion(this)">Compare Infosys vs Wipro performance</span>
+                        <span class="chip" onclick="askSuggestion(this)">Summarize HDFC Bank's recent outlook</span>
+                        <span class="chip" onclick="askSuggestion(this)">Which pharma stock is bullish today?</span>
+                        <span class="chip" onclick="askSuggestion(this)">Reliance Industries latest news</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="filter-row" id="filterRow">
+                    <span class="filter-label">Filter:</span>
+                    <!-- Populated by JS -->
+                </div>
+                <div class="input-row">
+                    <div class="input-box">
+                        <textarea id="question" rows="1" placeholder="Ask about any Indian stock, market news, or financial analysis..." maxlength="500"></textarea>
+                    </div>
+                    <button class="send-btn" id="sendBtn" onclick="ask()" title="Send (Ctrl+Enter)">➤</button>
+                    <button class="debate-btn" id="debateBtn" onclick="runDebate()" title="Debate">⚔️ Debate</button>
+                </div>
+                <div class="input-footer">
+                    <span class="input-hint">Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to send</span>
+                    <span class="char-count" id="charCount">0 / 500</span>
+                </div>
+            </div>
+        </section>
     </div>
 
     <script>
-        // --- High-End 3D Background Setup (Three.js) ---
-        const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x020205, 0.0015);
-        
-        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-        
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
+    // ─────────────────────────────────────────────────────────────────────
+    // DATA
+    // ─────────────────────────────────────────────────────────────────────
+    const COMPANIES = [
+        { ticker: "TCS",       symbol: "TCS.NS",     name: "Tata Consultancy",   color: "#3b82f6", bg: "rgba(59,130,246,0.15)" },
+        { ticker: "INFY",      symbol: "INFY.NS",     name: "Infosys",            color: "#8b5cf6", bg: "rgba(139,92,246,0.15)" },
+        { ticker: "HDFCBANK",  symbol: "HDFCBANK.NS", name: "HDFC Bank",          color: "#06b6d4", bg: "rgba(6,182,212,0.15)"  },
+        { ticker: "ICICIBANK", symbol: "ICICIBANKNS", name: "ICICI Bank",         color: "#10b981", bg: "rgba(16,185,129,0.15)" },
+        { ticker: "WIPRO",     symbol: "WIPRO.NS",    name: "Wipro",              color: "#f59e0b", bg: "rgba(245,158,11,0.15)" },
+        { ticker: "RELIANCE",  symbol: "RELIANCE.NS", name: "Reliance Inds.",     color: "#ef4444", bg: "rgba(239,68,68,0.15)"  },
+        { ticker: "BHARTIARTL",symbol: "BHARTIARTL",  name: "Bharti Airtel",      color: "#ec4899", bg: "rgba(236,72,153,0.15)" },
+        { ticker: "ITC",       symbol: "ITC.NS",      name: "ITC Limited",        color: "#14b8a6", bg: "rgba(20,184,166,0.15)" },
+        { ticker: "MARUTI",    symbol: "MARUTI.NS",   name: "Maruti Suzuki",      color: "#f97316", bg: "rgba(249,115,22,0.15)" },
+        { ticker: "SUNPHARMA", symbol: "SUNPHARMA.NS",name: "Sun Pharma",         color: "#a855f7", bg: "rgba(168,85,247,0.15)" },
+    ];
 
-        const group = new THREE.Group();
-        scene.add(group);
+    // Realistic mock price data (₹ INR)
+    const BASE_PRICES = {
+        TCS: 3720, INFY: 1620, HDFCBANK: 1680, ICICIBANK: 1265,
+        WIPRO: 460, RELIANCE: 2950, BHARTIARTL: 1850, ITC: 455,
+        MARUTI: 12400, SUNPHARMA: 1710
+    };
 
-        // 1. Central Core: Abstract wireframe icosahedron
-        const coreGeometry = new THREE.IcosahedronGeometry(8, 2);
-        const coreMaterial = new THREE.MeshBasicMaterial({
-            color: 0x00f0ff,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.15,
-            blending: THREE.AdditiveBlending
+    let stockData = {};
+    let selectedCompany = "TCS";
+    let activeFilter = null;
+    let currentSessionId = null;
+    let priceChart = null;
+
+    // ─────────────────────────────────────────────────────────────────────
+    // PRICE SIMULATION
+    // ─────────────────────────────────────────────────────────────────────
+    function simulatePrices() {
+        COMPANIES.forEach(c => {
+            const base = BASE_PRICES[c.ticker];
+            const history = generateHistory(base, 90);
+            const current = history[history.length - 1];
+            const prev = history[history.length - 2];
+            const change = ((current - prev) / prev * 100);
+            stockData[c.ticker] = { history, current, change };
         });
-        const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
-        group.add(coreMesh);
-        
-        // 2. Outer Ring: Second larger rotating sphere
-        const ringGeometry = new THREE.IcosahedronGeometry(12, 1);
-        const ringMaterial = new THREE.MeshBasicMaterial({
-            color: 0x7000ff,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.1,
-            blending: THREE.AdditiveBlending
-        });
-        const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
-        group.add(ringMesh);
+    }
 
-        // 3. Floating Particles (Data Streams)
-        const particlesGeometry = new THREE.BufferGeometry();
-        const particlesCount = 1500;
-        const posArray = new Float32Array(particlesCount * 3);
-        const colorArray = new Float32Array(particlesCount * 3);
-        
-        for(let i = 0; i < particlesCount * 3; i+=3) {
-            // Sphere distribution
-            const radius = 25 * Math.random();
-            const theta = Math.random() * 2 * Math.PI;
-            const phi = Math.acos((Math.random() * 2) - 1);
-            
-            posArray[i] = radius * Math.sin(phi) * Math.cos(theta);
-            posArray[i+1] = radius * Math.sin(phi) * Math.sin(theta);
-            posArray[i+2] = radius * Math.cos(phi);
-
-            // Mix cyan and purple
-            const mix = Math.random();
-            colorArray[i] = mix < 0.5 ? 0 : 0.44; // r
-            colorArray[i+1] = mix < 0.5 ? 0.94 : 0; // g
-            colorArray[i+2] = 1; // b
+    function generateHistory(base, days) {
+        const prices = [base];
+        for (let i = 1; i < days; i++) {
+            const drift = (Math.random() - 0.48) * 0.015;
+            prices.push(+(prices[i-1] * (1 + drift)).toFixed(2));
         }
-        
-        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-        particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
-        
-        // Additive blending for super bright particles
-        const particlesMaterial = new THREE.PointsMaterial({
-            size: 0.15,
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.8,
-            blending: THREE.AdditiveBlending,
-            sizeAttenuation: true
-        });
-        
-        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
-        group.add(particlesMesh);
-        
-        camera.position.z = 20;
+        return prices;
+    }
 
-        // Mouse Parallax Logic
-        let mouseX = 0;
-        let mouseY = 0;
-        let targetX = 0;
-        let targetY = 0;
-        const windowHalfX = window.innerWidth / 2;
-        const windowHalfY = window.innerHeight / 2;
-        
-        document.addEventListener('mousemove', (event) => {
-            mouseX = (event.clientX - windowHalfX) * 0.001;
-            mouseY = (event.clientY - windowHalfY) * 0.001;
-            
-            // 3D Panel Tilt Logic
-            const panel = document.getElementById('panel');
-            const rotateY = ((event.clientX / window.innerWidth) - 0.5) * 15; // Max 15deg
-            const rotateX = ((event.clientY / window.innerHeight) - 0.5) * -15;
-            panel.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-        });
-
-        document.addEventListener('mouseleave', () => {
-            document.getElementById('panel').style.transform = `rotateX(0deg) rotateY(0deg)`;
-        });
-
-        // Animation Loop
-        const clock = new THREE.Clock();
-        
-        function animate() {
-            requestAnimationFrame(animate);
-            const elapsedTime = clock.getElapsedTime();
-            
-            targetX = mouseX * 0.5;
-            targetY = mouseY * 0.5;
-            
-            // Complex rotations for the 3D geometries
-            coreMesh.rotation.y = elapsedTime * 0.1;
-            coreMesh.rotation.x = elapsedTime * 0.05;
-            
-            ringMesh.rotation.y = elapsedTime * -0.05;
-            ringMesh.rotation.z = elapsedTime * 0.08;
-
-            particlesMesh.rotation.y = elapsedTime * 0.02;
-            
-            // Group follows mouse smoothly
-            group.rotation.y += 0.05 * (targetX - group.rotation.y);
-            group.rotation.x += 0.05 * (targetY - group.rotation.x);
-            
-            // Pulse the core's opacity based on sine wave
-            coreMaterial.opacity = (Math.sin(elapsedTime * 2) * 0.1) + 0.15;
-            
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // --- Glitch Title Effect ---
-        const title = document.getElementById('glitch-title');
-        const originalText = title.innerText;
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';
-        
-        title.addEventListener('mouseover', () => {
-            let iteration = 0;
-            const interval = setInterval(() => {
-                title.innerText = title.innerText.split('').map((letter, index) => {
-                    if(index < iteration) return originalText[index];
-                    return chars[Math.floor(Math.random() * chars.length)];
-                }).join('');
-                if(iteration >= originalText.length) clearInterval(interval);
-                iteration += 1 / 3;
-            }, 30);
-        });
-
-        // --- Chat Logic ---
-        let currentSessionId = null;
-
-        async function ask() {
-            const input = document.getElementById("question");
-            const q = input.value.trim();
-            if (!q) return;
-
-            addMessage(q, "user");
-            input.value = "";
-            
-            const typingId = addTypingIndicator();
-
-            try {
-                const res = await fetch("/ask", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        question: q,
-                        session_id: currentSessionId
-                    })
-                });
-                
-                const data = await res.json();
-                document.getElementById(typingId).remove();
-                
-                if (data.session_id) {
-                    currentSessionId = data.session_id;
-                }
-
-                const msgId = `msg_${Date.now()}`;
-                let formattedAnswer = data.answer.replace(/\n/g, "<br>");
-                
-                let html = `${formattedAnswer}`;
-                html += `
-                    <div class="metadata">
-                        <span>⚡ ${data.latency_seconds}s latency</span>
-                        <span>🎯 ${data.quality_score} quality</span>
-                        <span>💸 ${data.cost_usd ? '$'+data.cost_usd.toFixed(4) : 'N/A'}</span>
-                    </div>`;
-                html += `
-                    <div class="feedback">
-                        <button class="feedback-btn" onclick="sendFeedback('${data.trace_id}', true, this)">👍 VALID</button>
-                        <button class="feedback-btn" onclick="sendFeedback('${data.trace_id}', false, this)">👎 ANOMALY</button>
+    // ─────────────────────────────────────────────────────────────────────
+    // BUILD SIDEBAR STOCK CARDS
+    // ─────────────────────────────────────────────────────────────────────
+    function buildStockCards() {
+        const container = document.getElementById('stocksList');
+        container.innerHTML = '';
+        COMPANIES.forEach(c => {
+            const d = stockData[c.ticker];
+            const isUp = d.change >= 0;
+            const card = document.createElement('div');
+            card.className = `stock-card${c.ticker === selectedCompany ? ' active' : ''}`;
+            card.id = `card-${c.ticker}`;
+            card.onclick = () => selectCompany(c.ticker);
+            card.innerHTML = `
+                <div class="stock-card-left">
+                    <div class="stock-avatar" style="background:${c.bg};color:${c.color}">${c.ticker.slice(0,3)}</div>
+                    <div class="stock-info">
+                        <span class="stock-symbol">${c.ticker}</span>
+                        <span class="stock-name">${c.name}</span>
                     </div>
-                `;
-                
-                addMessageHTML(html, "bot", msgId);
-
-            } catch (err) {
-                document.getElementById(typingId).remove();
-                addMessage("SYSTEM ERROR: Connection to Intelligence Node severed.", "bot");
-            }
-        }
-
-        async function sendFeedback(traceId, isThumbsUp, btn) {
-            try {
-                await fetch("/feedback", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        trace_id: traceId,
-                        thumbs_up: isThumbsUp,
-                        comment: ""
-                    })
-                });
-                const parent = btn.parentElement;
-                parent.innerHTML = isThumbsUp ? 
-                    "<span style='color: var(--primary); font-weight: 600;'>[✓ TELEMETRY UPDATED]</span>" : 
-                    "<span style='color: var(--secondary); font-weight: 600;'>[✓ ANOMALY LOGGED]</span>";
-            } catch (err) {
-                console.error("Feedback error", err);
-            }
-        }
-
-        function addMessage(text, type) {
-            const chat = document.getElementById("chat");
-            const div = document.createElement("div");
-            const id = `msg_${Date.now()}`;
-            div.id = id;
-            div.className = `message ${type}`;
-            div.textContent = text;
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
-            return id;
-        }
-        
-        function addTypingIndicator() {
-            const chat = document.getElementById("chat");
-            const div = document.createElement("div");
-            const id = `msg_${Date.now()}_typing`;
-            div.id = id;
-            div.className = `message bot`;
-            div.innerHTML = `
-                <div class="typing-indicator">
-                    <div class="pulse-core"></div>
-                    <div class="pulse-core"></div>
-                    <div class="pulse-core"></div>
+                </div>
+                <div class="stock-card-right">
+                    <span class="stock-price">₹${d.current.toLocaleString('en-IN')}</span>
+                    <span class="stock-pct ${isUp ? 'up' : 'down'}">${isUp ? '+' : ''}${d.change.toFixed(2)}%</span>
                 </div>
             `;
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
-            return id;
+            container.appendChild(card);
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // TICKER TAPE
+    // ─────────────────────────────────────────────────────────────────────
+    function buildTicker() {
+        const track = document.getElementById('tickerTrack');
+        let html = '';
+        // Duplicate for seamless loop
+        for (let pass = 0; pass < 2; pass++) {
+            COMPANIES.forEach(c => {
+                const d = stockData[c.ticker];
+                const isUp = d.change >= 0;
+                html += `
+                    <div class="ticker-item">
+                        <span class="ticker-symbol">${c.ticker}</span>
+                        <span class="ticker-price">₹${d.current.toLocaleString('en-IN')}</span>
+                        <span class="ticker-change ${isUp ? 'up' : 'down'}">${isUp ? '▲' : '▼'} ${Math.abs(d.change).toFixed(2)}%</span>
+                    </div>`;
+            });
+        }
+        track.innerHTML = html;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // PRICE CHART
+    // ─────────────────────────────────────────────────────────────────────
+    let currentPeriod = '1W';
+
+    function buildChart(ticker) {
+        const c = COMPANIES.find(x => x.ticker === ticker);
+        const d = stockData[ticker];
+        document.getElementById('chartCompanyName').textContent = ticker;
+
+        let sliceDays = { '1W': 7, '1M': 30, '3M': 90 }[currentPeriod];
+        const slice = d.history.slice(-sliceDays);
+        const labels = slice.map((_, i) => i === slice.length - 1 ? 'Now' : '');
+        const isUp = slice[slice.length-1] >= slice[0];
+        const lineColor = isUp ? '#10b981' : '#ef4444';
+        const fillColor = isUp ? 'rgba(16,185,129,0.07)' : 'rgba(239,68,68,0.07)';
+
+        if (priceChart) priceChart.destroy();
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        priceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    data: slice,
+                    borderColor: lineColor,
+                    borderWidth: 2,
+                    backgroundColor: fillColor,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                animation: { duration: 400 },
+                plugins: { legend: { display: false }, tooltip: {
+                    callbacks: { label: ctx => `₹${ctx.raw.toLocaleString('en-IN')}` },
+                    backgroundColor: 'rgba(6,9,16,0.9)',
+                    titleColor: '#f0f6ff', bodyColor: '#a0b9dc',
+                    borderColor: 'rgba(99,179,237,0.2)', borderWidth: 1,
+                    padding: 8,
+                }},
+                scales: {
+                    x: { display: false },
+                    y: {
+                        display: true, position: 'right',
+                        grid: { color: 'rgba(99,179,237,0.05)' },
+                        ticks: {
+                            color: 'rgba(100,130,165,0.6)', font: { size: 9, family: 'JetBrains Mono' },
+                            callback: v => '₹' + (v >= 1000 ? (v/1000).toFixed(1)+'k' : v)
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function setChartPeriod(period, btn) {
+        currentPeriod = period;
+        document.querySelectorAll('.chart-period-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        buildChart(selectedCompany);
+    }
+
+    function selectCompany(ticker) {
+        selectedCompany = ticker;
+        document.querySelectorAll('.stock-card').forEach(c => c.classList.remove('active'));
+        document.getElementById(`card-${ticker}`)?.classList.add('active');
+        buildChart(ticker);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // FILTER CHIPS
+    // ─────────────────────────────────────────────────────────────────────
+    function buildFilters() {
+        const row = document.getElementById('filterRow');
+        let html = '<span class="filter-label">Filter:</span>';
+        html += COMPANIES.slice(0, 6).map(c =>
+            `<span class="filter-chip" data-ticker="${c.ticker}" onclick="toggleFilter(this,'${c.ticker}')">${c.ticker}</span>`
+        ).join('');
+        html += `<span class="filter-chip clear" onclick="clearFilter()">✕ All</span>`;
+        row.innerHTML = html;
+    }
+
+    function toggleFilter(el, ticker) {
+        document.querySelectorAll('.filter-chip[data-ticker]').forEach(c => c.classList.remove('active'));
+        if (activeFilter === ticker) {
+            activeFilter = null;
+        } else {
+            activeFilter = ticker;
+            el.classList.add('active');
+        }
+    }
+
+    function clearFilter() {
+        activeFilter = null;
+        document.querySelectorAll('.filter-chip[data-ticker]').forEach(c => c.classList.remove('active'));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // CHAT
+    // ─────────────────────────────────────────────────────────────────────
+    function askSuggestion(el) {
+        const q = el.textContent;
+        document.getElementById('question').value = q;
+        ask();
+    }
+
+    async function ask() {
+        const textarea = document.getElementById('question');
+        const q = textarea.value.trim();
+        if (!q) return;
+
+        appendUserMessage(q);
+        textarea.value = '';
+        updateCharCount();
+
+        const sendBtn = document.getElementById('sendBtn');
+        sendBtn.disabled = true;
+
+        const typingId = appendTypingIndicator();
+
+        try {
+            const res = await fetch('/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question: q,
+                    session_id: currentSessionId,
+                    company_filter: activeFilter || null
+                })
+            });
+
+            removeElement(typingId);
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+                appendBotMessage(`⚠️ ${err.detail || 'Server error'}`, null);
+                return;
+            }
+
+            const data = await res.json();
+            if (data.session_id) currentSessionId = data.session_id;
+
+            appendBotMessage(data.answer, data);
+
+        } catch (err) {
+            removeElement(typingId);
+            appendBotMessage('❌ Connection lost. Please check that the server is running.', null);
+        } finally {
+            sendBtn.disabled = false;
+        }
+    }
+
+    async function runDebate() {
+        const textarea = document.getElementById('question');
+        const q = textarea.value.trim();
+        if (!q) return;
+
+        appendUserMessage(q);
+        textarea.value = '';
+        updateCharCount();
+
+        const debateBtn = document.getElementById('debateBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        debateBtn.disabled = true;
+        sendBtn.disabled = true;
+
+        const typingId = appendTypingIndicator();
+
+        try {
+            const res = await fetch('/debate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question: q,
+                    session_id: currentSessionId,
+                    company_filter: activeFilter || null
+                })
+            });
+
+            removeElement(typingId);
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+                appendBotMessage(`❌ ${err.detail || 'Server error'}`, null);
+                return;
+            }
+
+            const data = await res.json();
+            if (data.session_id) currentSessionId = data.session_id;
+
+            // Append Bull message
+            appendAgentMessage(data.bull_answer, "bull");
+            // Wait 500ms then append Bear message for visual effect
+            setTimeout(() => {
+                appendAgentMessage(data.bear_answer, "bear");
+                scrollChat();
+            }, 600);
+
+        } catch (err) {
+            removeElement(typingId);
+            appendBotMessage('❌ Connection lost. Please check that the server is running.', null);
+        } finally {
+            debateBtn.disabled = false;
+            sendBtn.disabled = false;
+        }
+    }
+
+    function appendUserMessage(text) {
+        const chat = document.getElementById('chatMessages');
+        const row = document.createElement('div');
+        row.className = 'msg-row user';
+        row.innerHTML = `
+            <div class="msg-avatar user-av">👤</div>
+            <div class="msg-content">
+                <div class="msg-bubble user">${escapeHtml(text)}</div>
+            </div>`;
+        chat.appendChild(row);
+        scrollChat();
+    }
+
+    function appendBotMessage(text, meta) {
+        const chat = document.getElementById('chatMessages');
+        const row = document.createElement('div');
+        row.className = 'msg-row';
+
+        const scoreClass = meta && meta.quality_score >= 0.7 ? 'green' : meta && meta.quality_score >= 0.4 ? 'gold' : '';
+        const traceId = meta ? meta.trace_id : '';
+
+        // Format text: convert markdown-style **bold** and newlines
+        let formatted = escapeHtml(text)
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>');
+
+        let metaHtml = '';
+        if (meta) {
+            metaHtml = `
+                <div class="msg-meta">
+                    <span class="meta-tag blue">⚡ ${meta.latency_seconds}s</span>
+                    <span class="meta-tag ${scoreClass}">🎯 ${(meta.quality_score * 100).toFixed(0)}% quality</span>
+                    ${meta.companies && meta.companies.length ? `<span class="meta-tag">🏢 ${meta.companies.slice(0,2).join(', ')}</span>` : ''}
+                </div>
+                <div class="msg-feedback">
+                    <button class="feedback-btn" onclick="sendFeedback('${traceId}', true, this)">👍 Accurate</button>
+                    <button class="feedback-btn" onclick="sendFeedback('${traceId}', false, this)">👎 Incorrect</button>
+                </div>`;
         }
 
-        function addMessageHTML(html, type, id) {
-            const chat = document.getElementById("chat");
-            const div = document.createElement("div");
-            div.id = id;
-            div.className = `message ${type}`;
-            div.innerHTML = html;
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
+        row.innerHTML = `
+            <div class="msg-avatar bot-av">🧠</div>
+            <div class="msg-content">
+                <div class="msg-bubble bot">${formatted}</div>
+                ${metaHtml}
+            </div>`;
+        chat.appendChild(row);
+        scrollChat();
+    }
+
+    function appendAgentMessage(text, agentType) {
+        const chat = document.getElementById('chatMessages');
+        const row = document.createElement('div');
+        row.className = 'msg-row';
+
+        let formatted = escapeHtml(text)
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>');
+
+        const isBull = agentType === "bull";
+        const avatarIcon = isBull ? "🐂" : "🐻";
+        const avatarBg = isBull ? "linear-gradient(135deg, #10b981, #059669)" : "linear-gradient(135deg, #ef4444, #b91c1c)";
+        const bubbleClass = isBull ? "bull" : "bear";
+
+        row.innerHTML = `
+            <div class="msg-avatar" style="background:${avatarBg}">${avatarIcon}</div>
+            <div class="msg-content">
+                <div class="msg-bubble ${bubbleClass}"><strong>${isBull ? 'Bull AI' : 'Bear AI'}</strong><br><br>${formatted}</div>
+            </div>`;
+        chat.appendChild(row);
+        scrollChat();
+    }
+
+    function appendTypingIndicator() {
+        const chat = document.getElementById('chatMessages');
+        const row = document.createElement('div');
+        const id = `typing_${Date.now()}`;
+        row.id = id;
+        row.className = 'msg-row';
+        row.innerHTML = `
+            <div class="msg-avatar bot-av">🧠</div>
+            <div class="msg-content">
+                <div class="msg-bubble bot">
+                    <div class="typing-bubble">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>`;
+        chat.appendChild(row);
+        scrollChat();
+        return id;
+    }
+
+    async function sendFeedback(traceId, isUp, btn) {
+        if (!traceId) return;
+        try {
+            await fetch('/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ trace_id: traceId, thumbs_up: isUp, comment: '' })
+            });
+            const parent = btn.parentElement;
+            parent.innerHTML = isUp
+                ? `<span style="color:var(--accent-green);font-size:0.75rem;font-weight:600;">✓ Thank you for your feedback!</span>`
+                : `<span style="color:var(--accent-red);font-size:0.75rem;font-weight:600;">✓ Logged for improvement</span>`;
+        } catch(e) { console.error(e); }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────────────────────────────
+    function scrollChat() {
+        const chat = document.getElementById('chatMessages');
+        requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
+    }
+
+    function removeElement(id) {
+        document.getElementById(id)?.remove();
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function updateCharCount() {
+        const q = document.getElementById('question').value;
+        const el = document.getElementById('charCount');
+        el.textContent = `${q.length} / 500`;
+        el.style.color = q.length > 450 ? 'var(--accent-red)' : 'var(--text-muted)';
+    }
+
+    // Ctrl+Enter to send
+    document.getElementById('question').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); ask(); }
+    });
+    document.getElementById('question').addEventListener('input', updateCharCount);
+
+    // Auto-resize textarea
+    document.getElementById('question').addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Live price refresh every 8s
+    function refreshPrices() {
+        COMPANIES.forEach(c => {
+            const d = stockData[c.ticker];
+            const drift = (Math.random() - 0.488) * 0.006;
+            const newPrice = +(d.current * (1 + drift)).toFixed(2);
+            const change = ((newPrice - d.history[d.history.length - 2]) / d.history[d.history.length - 2] * 100);
+            stockData[c.ticker].current = newPrice;
+            stockData[c.ticker].change = change;
+            stockData[c.ticker].history.push(newPrice);
+            stockData[c.ticker].history.shift();
+        });
+        buildStockCards();
+        buildTicker();
+        buildChart(selectedCompany);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // INIT
+    // ─────────────────────────────────────────────────────────────────────
+    simulatePrices();
+    buildTicker();
+    buildStockCards();
+    buildFilters();
+    buildChart(selectedCompany);
+    setInterval(refreshPrices, 8000);
+
+    // ─────────────────────────────────────────────────────────────────────
+    // 3D NEURAL NETWORK BACKGROUND (THREE.JS)
+    // ─────────────────────────────────────────────────────────────────────
+    const canvas = document.getElementById('three-canvas');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x020306, 0.002);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 40;
+
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const group = new THREE.Group();
+    scene.add(group);
+
+    // Create particles
+    const particleCount = 200;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    
+    for (let i = 0; i < particleCount * 3; i++) {
+        positions[i] = (Math.random() - 0.5) * 100;
+    }
+    
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    
+    // Circle texture for particles
+    const canvas2D = document.createElement('canvas');
+    canvas2D.width = 16;
+    canvas2D.height = 16;
+    const context = canvas2D.getContext('2d');
+    context.beginPath();
+    context.arc(8, 8, 8, 0, Math.PI * 2);
+    context.fillStyle = '#ffffff';
+    context.fill();
+    const texture = new THREE.CanvasTexture(canvas2D);
+
+    const pMaterial = new THREE.PointsMaterial({
+        color: 0x3b82f6,
+        size: 0.6,
+        transparent: true,
+        opacity: 0.8,
+        map: texture,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+
+    const particles = new THREE.Points(geometry, pMaterial);
+    group.add(particles);
+
+    // Create lines connecting close particles
+    const lineMaterial = new THREE.LineBasicMaterial({
+        color: 0x06b6d4,
+        transparent: true,
+        opacity: 0.15,
+        blending: THREE.AdditiveBlending
+    });
+
+    // We will update line positions in the animate loop to connect nearby nodes
+    let lineGeometry = new THREE.BufferGeometry();
+    let linesMesh = new THREE.LineSegments(lineGeometry, lineMaterial);
+    group.add(linesMesh);
+
+    // Mouse movement
+    let mouseX = 0;
+    let mouseY = 0;
+    document.addEventListener('mousemove', (event) => {
+        mouseX = (event.clientX - window.innerWidth / 2) * 0.05;
+        mouseY = (event.clientY - window.innerHeight / 2) * 0.05;
+    });
+
+    // Animation Loop
+    const clock = new THREE.Clock();
+    
+    function animate() {
+        requestAnimationFrame(animate);
+        const time = clock.getElapsedTime() * 0.1;
+
+        // Slowly rotate entire group
+        group.rotation.y = time * 0.5;
+        group.rotation.x = time * 0.2;
+
+        // Camera parallax based on mouse
+        camera.position.x += (mouseX - camera.position.x) * 0.05;
+        camera.position.y += (-mouseY - camera.position.y) * 0.05;
+        camera.lookAt(scene.position);
+
+        // Update lines between nodes that are close to each other
+        const positionsArray = particles.geometry.attributes.position.array;
+        const linePositions = [];
+        
+        for (let i = 0; i < particleCount; i++) {
+            for (let j = i + 1; j < particleCount; j++) {
+                const dx = positionsArray[i * 3] - positionsArray[j * 3];
+                const dy = positionsArray[i * 3 + 1] - positionsArray[j * 3 + 1];
+                const dz = positionsArray[i * 3 + 2] - positionsArray[j * 3 + 2];
+                const distSq = dx * dx + dy * dy + dz * dz;
+
+                if (distSq < 250) {
+                    linePositions.push(
+                        positionsArray[i * 3], positionsArray[i * 3 + 1], positionsArray[i * 3 + 2],
+                        positionsArray[j * 3], positionsArray[j * 3 + 1], positionsArray[j * 3 + 2]
+                    );
+                }
+            }
         }
+        
+        linesMesh.geometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
     </script>
 </body>
 </html>
