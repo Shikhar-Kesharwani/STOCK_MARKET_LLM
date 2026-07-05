@@ -6,7 +6,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![OpenAI](https://img.shields.io/badge/GPT--4o--mini-Powered-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com)
+[![Gemini](https://img.shields.io/badge/Gemini--2.5--Flash-Powered-412991?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector%20Store-FF6B35?style=for-the-badge&logo=databricks&logoColor=white)](https://www.trychroma.com)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
 [![Langfuse](https://img.shields.io/badge/Langfuse-Observability-6366F1?style=for-the-badge&logo=grafana&logoColor=white)](https://langfuse.com)
@@ -69,10 +69,11 @@ Traditional stock research tools either dump raw data (charts, tables) with no i
 
 | Capability | Detail |
 |---|---|
-| 🧠 **RAG Pipeline** | ChromaDB vector store + OpenAI `text-embedding-ada-002` |
-| 💬 **LLM** | `gpt-4o-mini` with grounded, cited prompts |
+| 🧠 **Hybrid RAG** | ChromaDB + BM25 Reciprocal Rank Fusion |
+| 💬 **LLM** | `gemini-2.5-flash` with grounded, cited prompts |
+| ⚔️ **Multi-Agent** | "Bull vs Bear" dual-agent debate system |
 | 📡 **Live Data** | Real-time via `yfinance` + 4 RSS news feeds |
-| 🔭 **Observability** | Full LLM tracing, cost, latency via Langfuse |
+| 🔭 **Observability** | Full LLM tracing, cost, latency via Langfuse v3 |
 | ⚖️ **Evaluation** | Automated LLM-as-Judge quality scoring on every response |
 | 🐳 **Deployment** | One-command Docker Compose |
 | 🔄 **Auto-Refresh** | Daily 6 AM vector store refresh (scheduled) |
@@ -88,9 +89,9 @@ Traditional stock research tools either dump raw data (charts, tables) with no i
 │                        NSE Intelligence Node                         │
 │                                                                       │
 │  ┌─────────┐    ┌──────────────┐    ┌────────────┐    ┌──────────┐  │
-│  │ Browser │───▶│  FastAPI     │───▶│  RAG Core  │───▶│ OpenAI   │  │
-│  │ (Three  │    │  REST API    │    │ (Retrieve  │    │ GPT-4o   │  │
-│  │  .js UI)│◀───│  /ask        │◀───│ + Generate)│◀───│  mini    │  │
+│  │ Browser │───▶│  FastAPI     │───▶│  RAG Core  │───▶│ Gemini   │  │
+│  │ (Three  │    │  /ask &      │◀───│ (Hybrid    │◀───│  2.5     │  │
+│  │  .js UI)│◀───│  /debate     │    │  RAG)      │    │  Flash   │  │
 │  └─────────┘    └──────┬───────┘    └─────┬──────┘    └──────────┘  │
 │                        │                  │                           │
 │                 ┌──────▼───────┐   ┌──────▼──────┐                   │
@@ -114,8 +115,8 @@ sequenceDiagram
     participant User as Browser
     participant API as FastAPI
     participant RAG as RAG Core
-    participant VDB as ChromaDB
-    participant LLM as GPT-4o-mini
+    participant VDB as ChromaDB + BM25
+    participant LLM as Gemini-2.5-Flash
     participant LF as Langfuse
 
     User->>API: POST /ask {question}
@@ -149,7 +150,7 @@ flowchart TD
     H --> I
     I --> J[Save JSON to data/processed/]
     J --> K[embedder.py]
-    K --> L[OpenAI text-embedding-ada-002]
+    K --> L[FastEmbed BAAI/bge-small-en-v1.5 + BM25]
     L --> M[ChromaDB Vector Store]
     M --> N[Ready for RAG Queries]
 ```
@@ -200,11 +201,11 @@ graph LR
 
 | Component | Technology | Purpose |
 |---|---|---|
-| **LLM** | Google Gemini (1.5 Flash) | Answer generation |
-| **Embeddings** | Gemini `text-embedding-004` | Semantic vectorization |
-| **Vector Store** | ChromaDB | Similarity search |
-| **Orchestration** | LangChain | RAG chain management |
-| **Observability** | Langfuse v3 | LLM tracing and evals |
+| **LLM** | Google Gemini (2.5 Flash) | Answer generation & Multi-Agent Debate |
+| **Embeddings** | FastEmbed (BAAI/bge-small-en-v1.5) | Local lightweight Semantic vectorization |
+| **Retrieval** | Hybrid (ChromaDB + BM25) | RRF-based precise retrieval |
+| **Orchestration** | Python custom logic | Lightweight LLM execution |
+| **Observability** | Langfuse | LLM tracing and evals |
 
 ### Backend
 
@@ -277,9 +278,10 @@ stock-intelligence-rag/
 **Core RAG**
 - [x] Live NSE/BSE stock data ingestion via `yfinance` (10 companies)
 - [x] Real-time news ingestion from 4 top Indian financial RSS feeds
-- [x] OpenAI `text-embedding-ada-002` semantic embeddings
-- [x] ChromaDB persistent vector store with similarity search
-- [x] `gpt-4o-mini` answer generation with grounded prompts
+- [x] FastEmbed Local Embeddings (free & fast)
+- [x] Hybrid Search (BM25 + ChromaDB) using Reciprocal Rank Fusion (RRF)
+- [x] `gemini-2.5-flash` answer generation with grounded prompts
+- [x] ⚔️ **Multi-Agent "Bull vs. Bear" Debate** feature
 - [x] Source citation in every answer — no hallucinations possible
 
 **Observability**
@@ -404,8 +406,8 @@ http://127.0.0.1:8000/static/index.html
 ### `.env.example`
 
 ```dotenv
-# Required. Get from: https://platform.openai.com/api-keys
-OPENAI_API_KEY=sk-proj-your-openai-key-here
+# Required. Get from: https://aistudio.google.com/
+GEMINI_API_KEY=your-gemini-api-key-here
 
 # Required. Get from: https://cloud.langfuse.com -> Settings -> API Keys
 LANGFUSE_PUBLIC_KEY=pk-lf-your-public-key-here
@@ -418,7 +420,7 @@ LANGFUSE_ENVIRONMENT=development
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes | OpenAI API key for embeddings + LLM |
+| `GEMINI_API_KEY` | Yes | Gemini API key for LLM generation |
 | `LANGFUSE_PUBLIC_KEY` | Yes | Langfuse project public key |
 | `LANGFUSE_SECRET_KEY` | Yes | Langfuse project secret key |
 | `LANGFUSE_HOST` | Yes | Langfuse host URL |
@@ -483,12 +485,16 @@ LANGFUSE_ENVIRONMENT=development
 
 ```mermaid
 flowchart TD
-    Q[User Question] --> EMB1[Embed Question\ntext-embedding-ada-002]
-    EMB1 --> SIM[Cosine Similarity Search\nChromaDB k=5]
-    SIM --> CTX[Top-k Context Documents]
+    Q[User Question] --> EMB1[Embed Question\nFastEmbed bge-small]
+    Q --> BM25[Tokenize\nBM25 Index]
+    EMB1 --> SIM[Cosine Similarity Search\nChromaDB k=10]
+    BM25 --> KW[Keyword Search\nk=10]
+    SIM --> RRF[Reciprocal Rank Fusion]
+    KW --> RRF
+    RRF --> CTX[Top-k Context Documents]
     CTX --> PROMPT[Grounded Prompt Builder]
     Q --> PROMPT
-    PROMPT --> LLM[GPT-4o-mini\nTemperature: 0.1]
+    PROMPT --> LLM[Gemini-2.5-flash\nTemperature: 0.0]
     LLM --> ANS[Cited Answer + Sources]
     ANS --> EVAL[LLM-as-Judge\nQuality Score 0-1]
     ANS --> LF[Langfuse Trace]
@@ -514,12 +520,10 @@ Provide a specific, factual answer with citations from the context above.
 
 | Parameter | Value |
 |---|---|
-| Embedding Model | `text-embedding-ada-002` |
-| Embedding Dimensions | 1,536 |
-| Chunk Size | 1,000 tokens |
-| Chunk Overlap | 200 tokens |
-| Similarity Metric | Cosine |
-| Top-k Retrieval | 5 documents |
+| Embedding Model | `BAAI/bge-small-en-v1.5` (FastEmbed) |
+| Search Type | Hybrid (ChromaDB + BM25 Okapi) |
+| Fusion Strategy | Reciprocal Rank Fusion (RRF, k=60) |
+| Top-k Retrieval | 6 documents |
 | Vector Store | ChromaDB (local persistent) |
 
 ### Data Sources
