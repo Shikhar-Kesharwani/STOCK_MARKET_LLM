@@ -102,7 +102,7 @@ Description: {str(info.get('longBusinessSummary', 'N/A'))[:500]}
         }
     })
     
-    print(f"  ✓ {company_name}: {len(documents)} documents")
+    print(f"  [OK] {company_name}: {len(documents)} documents")
     return documents
 
 
@@ -114,7 +114,7 @@ def fetch_all_companies() -> list[dict]:
             docs = fetch_stock_data(ticker, name)
             all_docs.extend(docs)
         except Exception as e:
-            print(f"  ✗ {ticker}: {e}")
+            print(f"  [X] {ticker}: {e}")
     
     print(f"\nTotal documents: {len(all_docs)}")
     return all_docs

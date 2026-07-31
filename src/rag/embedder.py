@@ -66,7 +66,7 @@ def build_vector_store(documents_path: str):
             embedding=embedder,
             index_name=index_name
         )
-        print(f"✓ Vector store built in Pinecone ({len(chunks)} chunks stored)")
+        print(f"[OK] Vector store built in Pinecone ({len(chunks)} chunks stored)")
     else:
         print("Model 1: Local Database detected. Building ChromaDB...")
         import shutil
@@ -78,7 +78,7 @@ def build_vector_store(documents_path: str):
             embedding=embedder,
             persist_directory=CHROMA_PATH
         )
-        print(f"✓ Vector store built in local ChromaDB ({len(chunks)} chunks stored)")
+        print(f"[OK] Vector store built in local ChromaDB ({len(chunks)} chunks stored)")
         
     return vectorstore
 

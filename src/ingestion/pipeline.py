@@ -29,15 +29,19 @@ def run_ingestion_pipeline():
     # Step 3: Save raw documents
     os.makedirs("data/processed", exist_ok=True)
     output_path = f"data/processed/documents_{datetime.now().strftime('%Y%m%d%H%M%S')}.json"
+    master_path = "data/processed/all_processed_docs.json"
     
-    with open(output_path, "w") as f:
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(all_documents, f, indent=2, default=str)
+
+    with open(master_path, "w", encoding="utf-8") as f:
         json.dump(all_documents, f, indent=2, default=str)
     
-    print(f"\n✓ Saved {len(all_documents)} documents to {output_path}")
+    print(f"\n[OK] Saved {len(all_documents)} documents to {output_path} & {master_path}")
     print(f"  Stock docs: {len(stock_docs)}")
     print(f"  News docs:  {len(news_docs)}")
     
-    return output_path
+    return master_path
 
 
 if __name__ == "__main__":

@@ -26,7 +26,7 @@ def check_env_var(var_name, required=True):
         print(f"❌ ERROR: Environment variable {var_name} is missing in .env")
         return False
     elif val:
-        print(f"✓ {var_name} is set")
+        print(f"[OK] {var_name} is set")
         return True
     return True
 
@@ -42,7 +42,7 @@ def run_model_1():
     print("\n2. Checking Docker installation...")
     try:
         subprocess.run(["docker", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print("✓ Docker detected.")
+        print("[OK] Docker detected.")
     except Exception:
         print("⚠️ Docker not detected or not running. Falling back to local python execution...")
         run_local_python()
@@ -51,7 +51,7 @@ def run_model_1():
     print("\n3. Launching Docker Compose Stack...")
     try:
         subprocess.run(["docker-compose", "up", "--build", "-d"], check=True)
-        print("✓ Docker containers started successfully!")
+        print("[OK] Docker containers started successfully!")
     except Exception as e:
         print(f"⚠️ Docker compose failed: {e}. Starting uvicorn directly...")
         run_local_python()
@@ -60,7 +60,7 @@ def run_model_1():
     print("\n4. Health Checking Local Server...")
     time.sleep(3)
     url = "http://localhost:8000"
-    print(f"✓ Application active at: {url}")
+    print(f"[OK] Application active at: {url}")
     webbrowser.open(url)
 
 def run_local_python():
@@ -82,20 +82,20 @@ def run_model_2():
             os.environ["PINECONE_API_KEY"] = pinecone_key
             with open(".env", "a") as f:
                 f.write(f"\nPINECONE_API_KEY={pinecone_key}\nPINECONE_INDEX_NAME=stock-intelligence\n")
-            print("✓ Saved PINECONE_API_KEY to .env")
+            print("[OK] Saved PINECONE_API_KEY to .env")
 
     print("\n2. Syncing Vector Store to Cloud (Pinecone)...")
     try:
         from src.rag.embedder import build_vector_store
         build_vector_store("data/processed/all_processed_docs.json")
-        print("✓ Vector database synced to Pinecone cloud index!")
+        print("[OK] Vector database synced to Pinecone cloud index!")
     except Exception as e:
         print(f"⚠️ Vector store sync notice: {e}")
 
     print("\n3. Cloud Deployment Configurations Ready:")
     print("  • Render Blueprint: render.yaml (Backend API)")
     print("  • Vercel Config:    vercel.json (Frontend UI)")
-    print("\n✓ Model 2 Cloud Pipeline is fully configured and ready for live hosting.")
+    print("\n[OK] Model 2 Cloud Pipeline is fully configured and ready for live hosting.")
 
 def main():
     parser = argparse.ArgumentParser(description="NSE Intelligence Node Model Manager")
