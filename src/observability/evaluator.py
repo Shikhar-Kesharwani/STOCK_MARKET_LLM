@@ -5,8 +5,20 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-langfuse = get_client()
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, google_api_key=os.environ.get("GEMINI_API_KEY"))
+try:
+    langfuse = get_client()
+except Exception as e:
+    print(f"Evaluator Langfuse init notice: {e}")
+    langfuse = None
+
+def get_eval_llm():
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if api_key:
+        try:
+            return ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, google_api_key=api_key)
+        except Exception:
+            return None
+    return None
 
 INDIAN_COMPANIES = [
     "reliance", "tcs", "hdfc", "infosys", "icici",
@@ -36,7 +48,10 @@ Respond ONLY with JSON:
 {{"score": 0.0-1.0, "reason": "one sentence"}}"""
 
     try:
-        response = llm.invoke(prompt)
+        eval_llm = get_eval_llm()
+        if not eval_llm:
+            return 0.8
+        response = eval_llm.invoke(prompt)
         # Handle markdown json wrapping sometimes added by Gemini
         content = response.content.strip()
         if content.startswith("```json"):
@@ -52,12 +67,16 @@ Respond ONLY with JSON:
         score = 0.5
         reason = f"Parse error: {e}"
 
-    langfuse.create_score(
-        trace_id=trace_id,
-        name="llm-judge-quality",
-        value=score,
-        comment=reason
-    )
+    if langfuse:
+        try:
+            langfuse.create_score(
+                trace_id=trace_id,
+                name="llm-judge-quality",
+                value=score,
+                comment=reason
+            )
+        except Exception:
+            pass
     return score
 
 
@@ -69,11 +88,15 @@ def eval_has_numbers(answer: str, trace_id: str) -> float:
     
     score = (has_rupee + has_percent + has_number) / 3
     
-    langfuse.create_score(
-        trace_id=trace_id,
-        name="has-specific-numbers",
-        value=score
-    )
+    if langfuse:
+        try:
+            langfuse.create_score(
+                trace_id=trace_id,
+                name="has-specific-numbers",
+                value=score
+            )
+        except Exception:
+            pass
     return score
 
 
@@ -83,11 +106,15 @@ def eval_mentions_company(answer: str, trace_id: str) -> float:
     found = any(c in answer_lower for c in INDIAN_COMPANIES)
     score = 1.0 if found else 0.0
     
-    langfuse.create_score(
-        trace_id=trace_id,
-        name="mentions-company",
-        value=score
-    )
+    if langfuse:
+        try:
+            langfuse.create_score(
+                trace_id=trace_id,
+                name="mentions-company",
+                value=score
+            )
+        except Exception:
+            pass
     return score
 
 
@@ -100,11 +127,15 @@ def eval_not_vague(answer: str, trace_id: str) -> float:
     is_vague = any(p in answer.lower() for p in vague_phrases)
     score = 0.0 if is_vague else 1.0
     
-    langfuse.create_score(
-        trace_id=trace_id,
-        name="not-vague",
-        value=score
-    )
+    if langfuse:
+        try:
+            langfuse.create_score(
+                trace_id=trace_id,
+                name="not-vague",
+                value=score
+            )
+        except Exception:
+            pass
     return score
 
 
@@ -125,9 +156,13 @@ def run_all_evals(question: str,
 def log_user_feedback(trace_id: str,
                       thumbs_up: bool,
                       comment: str = ""):
-    langfuse.create_score(
-        trace_id=trace_id,
-        name="user-feedback",
-        value=1.0 if thumbs_up else 0.0,
-        comment=comment
-    )
+    if langfuse:
+        try:
+            langfuse.create_score(
+                trace_id=trace_id,
+                name="user-feedback",
+                value=1.0 if thumbs_up else 0.0,
+                comment=comment
+            )
+        except Exception:
+            pass

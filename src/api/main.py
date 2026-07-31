@@ -10,13 +10,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-langfuse = get_client()
+try:
+    langfuse = get_client()
+except Exception as e:
+    print(f"Langfuse init notice: {e}")
+    langfuse = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
-    langfuse.flush()
-    print("Langfuse flushed on shutdown")
+    if langfuse:
+        try:
+            langfuse.flush()
+            print("Langfuse flushed on shutdown")
+        except Exception:
+            pass
 
 app = FastAPI(
     title="Indian Stock Intelligence RAG",
@@ -107,7 +115,11 @@ async def ask(req: QueryRequest):
     except Exception as e:
         raise HTTPException(500, f"RAG pipeline error: {str(e)}")
     finally:
-        langfuse.flush()
+        if langfuse:
+            try:
+                langfuse.flush()
+            except Exception:
+                pass
 
 @app.post("/debate")
 async def debate(req: QueryRequest):
@@ -144,7 +156,11 @@ async def debate(req: QueryRequest):
     except Exception as e:
         raise HTTPException(500, f"Debate pipeline error: {str(e)}")
     finally:
-        langfuse.flush()
+        if langfuse:
+            try:
+                langfuse.flush()
+            except Exception:
+                pass
 
 
 @app.post("/feedback")
