@@ -4,6 +4,7 @@ from langchain_chroma import Chroma
 from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 from langchain_core.documents import Document
 from rank_bm25 import BM25Okapi
+from src.rag.embedder import load_vector_store
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,11 +14,7 @@ _BM25_INDEX = None
 _CHUNKS = None
 
 def get_vector_store():
-    embedder = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
-    return Chroma(
-        persist_directory="data/chroma_db",
-        embedding_function=embedder
-    )
+    return load_vector_store()
 
 def _load_bm25():
     global _BM25_INDEX, _CHUNKS

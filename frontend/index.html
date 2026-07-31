@@ -587,6 +587,16 @@
 
     <script>
     // ─────────────────────────────────────────────────────────────────────
+    // BACKEND CONFIGURATION
+    // ─────────────────────────────────────────────────────────────────────
+    // For Vercel deployments, set this to your Render.com URL. 
+    // If running locally, it defaults to localhost.
+    const PROD_BACKEND_URL = "https://stock-intelligence-rag.onrender.com"; // <-- Update this later
+    const BACKEND_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
+        ? "" 
+        : PROD_BACKEND_URL;
+
+    // ─────────────────────────────────────────────────────────────────────
     // DATA
     // ─────────────────────────────────────────────────────────────────────
     const COMPANIES = [
@@ -815,7 +825,7 @@
         const typingId = appendTypingIndicator();
 
         try {
-            const res = await fetch('/ask', {
+            const res = await fetch(`${BACKEND_URL}/ask`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -863,7 +873,7 @@
         const typingId = appendTypingIndicator();
 
         try {
-            const res = await fetch('/debate', {
+            const res = await fetch(`${BACKEND_URL}/debate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

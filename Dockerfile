@@ -15,4 +15,4 @@ RUN mkdir -p data/raw data/processed data/chroma_db
 
 EXPOSE 8000
 
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8000}
