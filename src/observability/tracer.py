@@ -8,7 +8,11 @@ from src.rag.retriever import retrieve
 from src.rag.generator import generate_answer, format_context, generate_debate
 
 load_dotenv()
-langfuse = get_client()
+try:
+    langfuse = get_client()
+except Exception as e:
+    print(f"Tracer Langfuse init notice: {e}")
+    langfuse = None
 
 
 def ask_stock_rag_with_session(
@@ -39,6 +43,25 @@ def ask_stock_rag_with_session(
     
     environment = os.getenv("LANGFUSE_ENVIRONMENT", "development")
     
+    if not langfuse:
+        docs = retrieve(question, company_filter)
+        result = generate_answer(question, docs, None, None, session_id)
+        from src.rag.generator import SESSION_STORE
+        if session_id not in SESSION_STORE:
+            SESSION_STORE[session_id] = []
+        SESSION_STORE[session_id].append({"user": question, "ai": result["answer"]})
+        latency = time.time() - start
+        return {
+            "question": question,
+            "answer": result["answer"],
+            "sources": [d.metadata for d in docs],
+            "latency": latency,
+            "companies": result["companies_referenced"],
+            "trace_id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "cost_usd": result.get("cost_usd", 0)
+        }
+
     with langfuse.start_as_current_observation(
         name="stock-query",
         metadata={"environment": environment, "company_filter": company_filter, "session_id": session_id, "user_id": user_id, "tags": tags}
@@ -101,6 +124,29 @@ def run_debate_with_session(
         
     environment = os.getenv("LANGFUSE_ENVIRONMENT", "development")
     
+    if not langfuse:
+        docs = retrieve(question, company_filter)
+        result = generate_debate(question, docs, None, None, session_id)
+        from src.rag.generator import SESSION_STORE
+        if session_id not in SESSION_STORE:
+            SESSION_STORE[session_id] = []
+        SESSION_STORE[session_id].append({
+            "user": question, 
+            "ai": f"Bull: {result['bull_answer']}\n\nBear: {result['bear_answer']}"
+        })
+        latency = time.time() - start
+        return {
+            "question": question,
+            "bull_answer": result["bull_answer"],
+            "bear_answer": result["bear_answer"],
+            "sources": [d.metadata for d in docs],
+            "latency": latency,
+            "companies": result["companies_referenced"],
+            "trace_id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "cost_usd": result.get("cost_usd", 0)
+        }
+
     with langfuse.start_as_current_observation(
         name="stock-debate",
         metadata={"environment": environment, "company_filter": company_filter, "session_id": session_id, "user_id": user_id, "tags": tags}

@@ -1,7 +1,5 @@
 import os
 import pickle
-from langchain_chroma import Chroma
-from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 from langchain_core.documents import Document
 from rank_bm25 import BM25Okapi
 from src.rag.embedder import load_vector_store
