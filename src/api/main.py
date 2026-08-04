@@ -37,7 +37,7 @@ from fastapi.responses import FileResponse
 # Serve frontend
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
     """Serve main frontend UI directly at root URL."""
     return FileResponse("frontend/index.html")
@@ -59,13 +59,17 @@ class FeedbackRequest(BaseModel):
 
 
 # ── Endpoints ─────────────────────────────────────────────
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {
         "status": "healthy",
         "observability": "langfuse",
         "version": "1.0.0"
     }
+
+@app.get("/ready")
+async def readiness_check():
+    return {"status": "ready"}
 
 
 @app.post("/ask")
