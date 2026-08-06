@@ -5,9 +5,9 @@ WORKDIR /app
 # Install curl for health check
 RUN apt-get update && apt-get install -y --no-install-recommends curl gcc python3-dev && rm -rf /var/lib/apt/lists/*
 
-# Copy and install requirements with memory-efficient pip options
+# Copy and install requirements
 COPY requirements.txt .
-RUN pip install --no-cache-dir --only-binary=:all: -r requirements.txt || pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Create non-root user
 RUN addgroup --system app && adduser --system --group app
