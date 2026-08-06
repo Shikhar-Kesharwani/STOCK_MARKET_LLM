@@ -1,10 +1,11 @@
 services:
   - type: web
-    name: stock-intelligence-rag
+    name: STOCK_MARKET_LLM
     runtime: docker
     plan: free
-    region: singapore
+    region: oregon
     dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
     envVars:
       - key: GEMINI_API_KEY
         sync: false

@@ -6,6 +6,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 
 FROM python:3.11-slim AS production
 WORKDIR /app
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 RUN addgroup --system app && adduser --system --group app
 COPY --from=builder /root/.local /home/app/.local
 COPY . .
