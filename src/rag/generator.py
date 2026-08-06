@@ -55,7 +55,7 @@ def generate_answer(question: str,
     Returns answer + metadata for tracing.
     """
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-1.5-flash",
         temperature=0,
         max_tokens=400,
         google_api_key=os.environ.get("GEMINI_API_KEY")
@@ -84,7 +84,7 @@ ANSWER:"""
     with langfuse.start_as_current_observation(
         as_type="generation",
         name="llm-call",
-        model="gemini-2.5-flash",
+        model="gemini-1.5-flash",
         input=prompt
     ) as generation:
         
@@ -136,7 +136,7 @@ def generate_debate(question: str,
     Runs sequentially for simplicity, returning both.
     """
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-1.5-flash",
         temperature=0,
         max_tokens=300,
         google_api_key=os.environ.get("GEMINI_API_KEY")
@@ -166,7 +166,7 @@ ANSWER:"""
     
     # 1. Bull Call
     with langfuse.start_as_current_observation(
-        as_type="generation", name="llm-call-bull", model="gemini-2.5-flash", input=bull_prompt
+        as_type="generation", name="llm-call-bull", model="gemini-1.5-flash", input=bull_prompt
     ) as bull_gen:
         bull_res = llm.invoke(bull_prompt)
         u1 = bull_res.usage_metadata
@@ -178,7 +178,7 @@ ANSWER:"""
         
     # 2. Bear Call
     with langfuse.start_as_current_observation(
-        as_type="generation", name="llm-call-bear", model="gemini-2.5-flash", input=bear_prompt
+        as_type="generation", name="llm-call-bear", model="gemini-1.5-flash", input=bear_prompt
     ) as bear_gen:
         bear_res = llm.invoke(bear_prompt)
         u2 = bear_res.usage_metadata

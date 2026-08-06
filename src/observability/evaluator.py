@@ -15,7 +15,7 @@ def get_eval_llm():
     api_key = os.environ.get("GEMINI_API_KEY")
     if api_key:
         try:
-            return ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, google_api_key=api_key)
+            return ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0, google_api_key=api_key)
         except Exception:
             return None
     return None
