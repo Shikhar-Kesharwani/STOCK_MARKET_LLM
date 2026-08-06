@@ -7,7 +7,7 @@ steps:
     entrypoint: gcloud
     args: ['run','deploy','$_SERVICE_NAME','--image=gcr.io/$PROJECT_ID/$_SERVICE_NAME','--region=asia-south1','--platform=managed','--allow-unauthenticated','--memory=$_MEMORY','--min-instances=0','--max-instances=3','--port=$_PORT']
 substitutions:
-  _SERVICE_NAME: stock-intelligence-backend
-  _MEMORY: 512Mi
+  _SERVICE_NAME: stock-market-llm
+  _MEMORY: 2Gi
   _PORT: '8000'
 images: ['gcr.io/$PROJECT_ID/$_SERVICE_NAME']

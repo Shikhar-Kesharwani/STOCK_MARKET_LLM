@@ -15,7 +15,7 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
       - uses: google-github-actions/deploy-cloudrun@v2
         with:
-          service: stock-intelligence-backend
+          service: stock-market-llm
           region: asia-south1
           source: .
-          flags: --allow-unauthenticated --memory=512Mi --min-instances=0 --max-instances=3
+          flags: --allow-unauthenticated --memory=2Gi --min-instances=0 --max-instances=3

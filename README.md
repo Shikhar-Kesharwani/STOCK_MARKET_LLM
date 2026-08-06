@@ -915,4 +915,4 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 </div>
 
 ## Deployment
-Deployment configurations added.
+This project is configured for deployment with Docker and Google Cloud Run. See cloudbuild.yaml and deploy-cloudrun.yml for details.
