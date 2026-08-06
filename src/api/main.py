@@ -36,8 +36,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
 from starlette.requests import Request
@@ -56,7 +57,8 @@ from fastapi.responses import FileResponse
 # Serve frontend
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
-@app.api_route("/", methods=["GET", "HEAD"])
+@app.get("/")
+@app.head("/")
 async def root():
     """Serve main frontend UI directly at root URL."""
     return FileResponse("frontend/index.html")
@@ -78,17 +80,14 @@ class FeedbackRequest(BaseModel):
 
 
 # ── Endpoints ─────────────────────────────────────────────
-@app.api_route("/health", methods=["GET", "HEAD"])
+@app.get("/health")
+@app.head("/health")
 async def health():
     return {
         "status": "healthy",
         "observability": "langfuse",
         "version": "1.0.0"
     }
-
-@app.get("/ready")
-async def readiness_check():
-    return {"status": "ready"}
 
 
 @app.post("/ask")
