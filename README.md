@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=venom&height=300&text=NSE%20Intelligence%20Node&fontSize=70&color=0:00f0ff,50:7000ff,100:ff0055&stroke=00f0ff&strokeWidth=2&fontColor=ffffff&animation=twinkling&desc=Production-Grade%20Indian%20Stock%20Market%20AI%20%7C%20RAG%20%2B%20LLM%20%2B%20Full%20Observability&descAlignY=62&descSize=18" width="100%"/>
 
@@ -12,7 +12,7 @@
 [![Langfuse](https://img.shields.io/badge/Langfuse-Observability-6366F1?style=for-the-badge&logo=grafana&logoColor=white)](https://langfuse.com)
 
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.0-blue?style=flat-square)](https://github.com/AyushGU12/STOCK_MARKET_LLM/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.0-blue?style=flat-square)](https://github.com/Shikhar-Kesharwani/STOCK_MARKET_LLM/releases)
 [![Status](https://img.shields.io/badge/Status-Beta-yellow?style=flat-square)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 
@@ -340,7 +340,7 @@ stock-intelligence-rag/
 ### 1. Clone
 
 ```bash
-git clone https://github.com/AyushGU12/STOCK_MARKET_LLM.git
+git clone https://github.com/Shikhar-Kesharwani/STOCK_MARKET_LLM.git
 cd STOCK_MARKET_LLM
 ```
 
@@ -881,7 +881,7 @@ print('Documents in vector store:', col.count())
 ```
 MIT License
 
-Copyright (c) 2025 AyushGU12
+Copyright (c) 2025 Shikhar-Kesharwani
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -906,7 +906,7 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 
 **Built with love for the Indian Developer Community**
 
-[![GitHub](https://img.shields.io/badge/GitHub-AyushGU12-181717?style=for-the-badge&logo=github)](https://github.com/AyushGU12)
+[![GitHub](https://img.shields.io/badge/GitHub-Shikhar-Kesharwani-181717?style=for-the-badge&logo=github)](https://github.com/Shikhar-Kesharwani)
 
 **Star this repository if it helped you — it keeps the project alive!**
 
