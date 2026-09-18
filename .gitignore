@@ -20,6 +20,8 @@ ENV/
 
 # Secrets - NEVER COMMIT
 .env
+.env.*
+!.env.example
 
 # Data & Vector Store
 data/chroma_db/
@@ -42,3 +44,6 @@ desktop.ini
 
 # Docker
 .docker/
+
+# Scratch / Local Tests
+scratch/
